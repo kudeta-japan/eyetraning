@@ -1,132 +1,106 @@
-.<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>視力トレーナー『Focus Play』</title>
-  <style>
-    :root{
-      --bg:#0f172a; /* slate-900 */
-      --panel:#111827; /* gray-900 */
-      --muted:#334155; /* slate-600 */
-      --text:#e5e7eb; /* gray-200 */
-      --accent:#22c55e; /* green-500 */
-      --accent2:#3b82f6; /* blue-500 */
-      --warn:#f59e0b; /* amber-500 */
-      --err:#ef4444; /* red-500 */
-      --ok:#10b981; /* emerald-500 */
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans JP",sans-serif}
-    .wrapper{display:grid;grid-template-columns:320px 1fr;gap:16px;height:100%;padding:16px}
-    .panel{background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.06);border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,0.3)}
-    .left{padding:16px;display:flex;flex-direction:column;gap:14px}
-    .title{font-weight:800;font-size:22px;letter-spacing:0.2px}
-    .subtitle{font-size:12px;color:#cbd5e1}
-    .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
-    label{font-size:14px;color:#cbd5e1}
-    select, input[type="range"], input[type="number"], button{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:#0b1220;color:var(--text)}
-    button{cursor:pointer;font-weight:700;letter-spacing:0.2px}
-    button.primary{background:linear-gradient(180deg,var(--accent2),#1d4ed8);border:none}
-    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.12)}
-    button:disabled{opacity:.6;cursor:not-allowed}
-    .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-    .stat{background:#0b1220;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px}
-    .stat .k{font-size:11px;color:#94a3b8}
-    .stat .v{font-size:18px;font-weight:800}
-    .canvas-wrap{position:relative}
-    canvas{width:100%;height:calc(100vh - 32px);display:block;background:radial-gradient(1200px 600px at 10% -10%,rgba(59,130,246,0.08),transparent), radial-gradient(1000px 800px at 120% 110%,rgba(34,197,94,0.08),transparent), #0b1220;border-radius:16px}
-    .badge{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border-radius:999px;background:#0b1220;border:1px solid rgba(255,255,255,0.1);font-size:12px;color:#cbd5e1}
-    .footer{font-size:12px;color:#94a3b8}
-    .hr{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent)}
-    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#0f172a;border:1px solid rgba(255,255,255,0.1);font-size:12px}
-    .info{font-size:12px;color:#cbd5e1;line-height:1.5}
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>20-20-20ルールゲーム『Distant Gaze』</title>
+<style>
+  :root{
+    --bg:#0b1220; --panel:#0f172a; --muted:#64748b; --text:#e5e7eb; --green:#10b981; --blue:#3b82f6; --amber:#f59e0b; --red:#ef4444;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans JP",sans-serif}
+  .wrap{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:16px;height:100%}
+  .panel{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.06);border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+  .left{padding:16px;display:flex;flex-direction:column;gap:14px}
+  .title{font-weight:800;font-size:22px}
+  .subtitle{font-size:12px;color:#cbd5e1}
+  label{font-size:13px;color:#cbd5e1}
+  input,select,button{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:#0b1220;color:var(--text)}
+  button{cursor:pointer;font-weight:700}
+  .primary{background:linear-gradient(180deg,var(--blue),#1d4ed8);border:none}
+  .ghost{background:transparent}
+  .row{display:flex;gap:8px;align-items:center}
+  .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .stat{background:#0b1220;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px}
+  .k{font-size:11px;color:#94a3b8}.v{font-size:18px;font-weight:800}
+  .area{position:relative}
+  canvas{width:100%;height:calc(100vh - 32px);display:block;background:radial-gradient(900px 500px at 0% -10%,rgba(59,130,246,.08),transparent), radial-gradient(900px 700px at 110% 110%,rgba(16,185,129,.08),transparent), #0b1220;border-radius:16px}
+  .badge{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border-radius:999px;background:#0b1220;border:1px solid rgba(255,255,255,.1);font-size:12px;color:#cbd5e1}
+  .note{font-size:12px;color:#94a3b8;line-height:1.7}
+  .hr{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent)}
+  .toast{position:absolute;left:50%;top:16px;transform:translateX(-50%);padding:10px 14px;border-radius:12px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);backdrop-filter:blur(6px);font-weight:700}
 
-    .toast{position:absolute;left:50%;top:16px;transform:translateX(-50%);padding:10px 14px;border-radius:12px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);backdrop-filter:blur(6px);font-weight:700}
-    .modal{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px)}
-    .modal .card{max-width:520px;padding:20px;border-radius:16px;background:#0b1220;border:1px solid rgba(255,255,255,0.12)}
-    .modal h3{margin:0 0 8px;font-size:20px}
-    .modal p{margin:0 0 12px;color:#cbd5e1;font-size:14px;line-height:1.7}
+  .modal{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);backdrop-filter:blur(4px)}
+  .modal .card{max-width:560px;padding:20px;border-radius:16px;background:#0b1220;border:1px solid rgba(255,255,255,.12)}
+  .modal h3{margin:0 0 8px;font-size:20px}
+  .modal p{margin:0 0 12px;color:#cbd5e1;font-size:14px;line-height:1.7}
 
-    @media (max-width: 1024px){
-      .wrapper{grid-template-columns:1fr}
-      canvas{height:56vh}
-    }
-  </style>
+  @media (max-width:1024px){.wrap{grid-template-columns:1fr} canvas{height:58vh}}
+</style>
 </head>
 <body>
-  <div class="wrapper">
+  <div class="wrap">
     <aside class="panel left">
-      <div class="row" style="justify-content:flex-start;gap:8px">
-        <span class="badge">👀 視力トレーナー『Focus Play』</span>
+      <div class="row" style="justify-content:flex-start">
+        <span class="badge">👀 20-20-20ルール ゲーム『Distant Gaze』</span>
       </div>
-      <div class="title">モード選択</div>
+
+      <div class="title">セッション設定</div>
       <div>
-        <label for="mode">トレーニングモード</label>
-        <select id="mode">
-          <option value="saccade">サッカード（素早い眼球運動）</option>
-          <option value="contrast">コントラスト検出</option>
-        </select>
-      </div>
-      <div class="row">
-        <label for="difficulty">難易度</label>
-        <input id="difficulty" type="range" min="1" max="10" value="5" />
-      </div>
-      <div class="row">
-        <label for="duration">セッション（分）</label>
-        <input id="duration" type="number" min="1" max="30" value="3" />
+        <label for="focusMin">作業(分) — 推奨20</label>
+        <input id="focusMin" type="number" min="5" max="120" value="20"/>
       </div>
       <div>
-        <label for="eye">トレーニング対象</label>
-        <select id="eye">
-          <option value="both">両目</option>
-          <option value="right">右目（左目を軽く覆う）</option>
-          <option value="left">左目（右目を軽く覆う）</option>
-        </select>
+        <label for="breakSec">休憩(秒) — 推奨20</label>
+        <input id="breakSec" type="number" min="10" max="120" value="20"/>
       </div>
-      <div class="row" style="gap:8px">
-        <button id="startBtn" class="primary">▶ 開始</button>
-        <button id="pauseBtn" class="ghost" disabled>⏸ 一時停止</button>
-        <button id="resetBtn" class="ghost" disabled>⟲ リセット</button>
+      <div>
+        <label for="autoLoop">自動で繰り返す</label>
+        <select id="autoLoop"><option value="on">オン</option><option value="off">オフ</option></select>
+      </div>
+      <div class="row">
+        <button id="startBtn" class="primary">▶ 開始 / 再開</button>
+        <button id="pauseBtn" class="ghost">⏸ 一時停止</button>
+        <button id="resetBtn" class="ghost">⟲ リセット</button>
+      </div>
+      <div class="row">
+        <button id="notifBtn" class="ghost">🔔 通知を許可</button>
+        <button id="soundBtn" class="ghost">🔊 サウンド: オン</button>
       </div>
 
       <div class="hr"></div>
-
       <div class="title">ステータス</div>
       <div class="stats">
-        <div class="stat"><div class="k">スコア</div><div id="statScore" class="v">0</div></div>
-        <div class="stat"><div class="k">レベル</div><div id="statLevel" class="v">1</div></div>
-        <div class="stat"><div class="k">反応時間</div><div id="statRt" class="v">—</div></div>
-        <div class="stat"><div class="k">残り時間</div><div id="statTime" class="v">—</div></div>
+        <div class="stat"><div class="k">モード</div><div id="statMode" class="v">作業</div></div>
+        <div class="stat"><div class="k">残り時間</div><div id="statRemain" class="v">20:00</div></div>
+        <div class="stat"><div class="k">完了休憩</div><div id="statBreaks" class="v">0</div></div>
+        <div class="stat"><div class="k">連続達成</div><div id="statStreak" class="v">0</div></div>
       </div>
 
-      <div class="title">ハイスコア</div>
-      <div class="stats">
-        <div class="stat"><div class="k">サッカード</div><div id="hsSaccade" class="v">0</div></div>
-        <div class="stat"><div class="k">コントラスト</div><div id="hsContrast" class="v">0</div></div>
-      </div>
-
-      <div class="title">使い方</div>
-      <div class="info">
-        1) モードと難易度を選んで開始。<br/>
-        2) <span class="pill">サッカード</span>：中央の＋を見続け、出現した丸をすばやくクリック。成功でスコア↑・サイズ↓。<br/>
-        3) <span class="pill">コントラスト</span>：薄い色の中から "最も濃い" マスをクリック。正解すると差が小さくなり難度↑。<br/>
-        4) 長時間は控えめに。<b>20-20-20ルール</b>（20分ごとに20フィート先を20秒見る）も活用してください。
+      <div class="title">遊び方</div>
+      <div class="note">
+        1) 「開始」すると<b>作業20分</b>のリングが進みます。<br/>
+        2) 終了後、自動で<b>休憩20秒</b>の「遠くを見る」モードへ。画面の地平線をぼんやり眺め、<b>6m（20フィート）以上</b>の遠くにピントを合わせるイメージで休めましょう。<br/>
+        3) 休憩を最後までやり切るとスコア&連続達成数が増えます。スキップすると連続が途切れます。<br/>
+        4) 目を乾かさないよう、休憩中はゆっくり<b>10回程度の瞬き</b>を。
       </div>
 
       <div class="title">注意</div>
-      <div class="footer">このゲームは目の疲労軽減や視覚スキルのトレーニング補助を目的としています。医療行為ではありません。違和感や痛みがある場合は中止し、必要に応じて眼科医に相談してください。</div>
+      <div class="note">本ツールはセルフケア用の補助です。医療行為ではありません。痛み・見えにくさが増す場合は中止し、眼科へ相談してください。</div>
     </aside>
 
-    <main class="panel canvas-wrap">
-      <canvas id="stage" width="1400" height="900" aria-label="トレーニングエリア" role="img"></canvas>
+    <main class="panel area">
+      <canvas id="stage" width="1400" height="900" aria-label="20-20-20ゲーム" role="img"></canvas>
       <div id="toast" class="toast" style="display:none"></div>
+
+      <!-- Break Modal -->
       <div id="breakModal" class="modal" aria-modal="true">
         <div class="card">
-          <h3>ブレイクタイム（20-20-20）</h3>
-          <p>20秒間、できるだけ遠くの一点にピントを合わせてください。瞬きを意識し、肩と首を軽く回しましょう。</p>
+          <h3>20秒ブレイク！ 遠くを見よう</h3>
+          <p>モニターから目を離し、できれば窓の外など<b>6m以上</b>の一点へ視線を。ゆっくり瞬きを繰り返し、肩と首を軽く回しましょう。</p>
           <p>残り <span id="breakCountdown">20</span> 秒</p>
-          <div class="row" style="gap:8px">
+          <div class="row">
             <button id="skipBreak" class="ghost">スキップ</button>
             <button id="endBreak" class="primary" disabled>再開</button>
           </div>
@@ -135,331 +109,203 @@
     </main>
   </div>
 
-  <script>
-  ;(() => {
-    const canvas = document.getElementById('stage');
-    const ctx = canvas.getContext('2d');
+<script>
+(() => {
+  const canvas = document.getElementById('stage');
+  const ctx = canvas.getContext('2d');
+  const E = id => document.getElementById(id);
+  const els = {
+    focusMin: E('focusMin'), breakSec: E('breakSec'), autoLoop: E('autoLoop'),
+    startBtn: E('startBtn'), pauseBtn: E('pauseBtn'), resetBtn: E('resetBtn'),
+    notifBtn: E('notifBtn'), soundBtn: E('soundBtn'),
+    statMode: E('statMode'), statRemain: E('statRemain'), statBreaks: E('statBreaks'), statStreak: E('statStreak'),
+    toast: E('toast'), breakModal: E('breakModal'), breakCountdown: E('breakCountdown'), endBreak: E('endBreak'), skipBreak: E('skipBreak')
+  };
 
-    const els = {
-      mode: document.getElementById('mode'),
-      difficulty: document.getElementById('difficulty'),
-      duration: document.getElementById('duration'),
-      eye: document.getElementById('eye'),
-      startBtn: document.getElementById('startBtn'),
-      pauseBtn: document.getElementById('pauseBtn'),
-      resetBtn: document.getElementById('resetBtn'),
-      statScore: document.getElementById('statScore'),
-      statLevel: document.getElementById('statLevel'),
-      statRt: document.getElementById('statRt'),
-      statTime: document.getElementById('statTime'),
-      hsSaccade: document.getElementById('hsSaccade'),
-      hsContrast: document.getElementById('hsContrast'),
-      toast: document.getElementById('toast'),
-      breakModal: document.getElementById('breakModal'),
-      breakCountdown: document.getElementById('breakCountdown'),
-      endBreak: document.getElementById('endBreak'),
-      skipBreak: document.getElementById('skipBreak'),
-    };
+  // ---- state
+  const HS_KEY='distant_gaze_stats_v1';
+  const persisted = JSON.parse(localStorage.getItem(HS_KEY) || '{"breaks":0,"streak":0}');
+  let state = {
+    running:false, paused:false,
+    mode:'work', // 'work' | 'break'
+    startAt:0, endAt:0, // timestamps (ms)
+    breaks: persisted.breaks||0, streak: persisted.streak||0,
+    sound:true, notif:false,
+    // visual
+    ring: {progress:0},
+    // break
+    breakTimer:null, breakRemaining:20,
+  };
 
-    // ---- persistent
-    const HS_KEY = 'focusplay_highscores_v1';
-    const hs = JSON.parse(localStorage.getItem(HS_KEY) || '{"saccade":0,"contrast":0}');
-    function saveHS(){ localStorage.setItem(HS_KEY, JSON.stringify(hs)); }
-    function updateHSUI(){ els.hsSaccade.textContent = hs.saccade|0; els.hsContrast.textContent = hs.contrast|0; }
-    updateHSUI();
+  function save(){ localStorage.setItem(HS_KEY, JSON.stringify({breaks:state.breaks, streak:state.streak})); }
 
-    // ---- global state
-    let state = {
-      running: false,
-      paused: false,
-      mode: 'saccade',
-      level: 1,
-      score: 0,
-      rtList: [],
-      startAt: 0,
-      endAt: 0,
-      remainingMs: 0,
-      lastBreakAt: 0,
-      eye: 'both',
-    };
+  // ---- utils
+  const now=()=>performance.now();
+  const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+  function mmss(ms){ ms=Math.max(0,ms); const s=Math.ceil(ms/1000); const m=Math.floor(s/60); const ss=('0'+(s%60)).slice(-2); return `${m}:${ss}`; }
+  function showToast(msg,ms=1200){ els.toast.textContent=msg; els.toast.style.display='block'; setTimeout(()=> els.toast.style.display='none',ms); }
 
-    // ---- utils
-    const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
-    const rand=(min,max)=>Math.random()*(max-min)+min;
-    const now=()=>performance.now();
+  // ---- audio
+  let actx=null; function beep(freq=880,dur=0.15){ if(!state.sound) return; try{ actx = actx||new (window.AudioContext||window.webkitAudioContext)(); const o=actx.createOscillator(); const g=actx.createGain(); o.frequency.value=freq; o.type='sine'; g.gain.value=0.0001; o.connect(g); g.connect(actx.destination); o.start(); const t=actx.currentTime; g.gain.exponentialRampToValueAtTime(0.2,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.stop(t+dur+0.02);}catch(e){} }
 
-    function showToast(msg, ms=1200){
-      els.toast.textContent = msg; els.toast.style.display = 'block';
-      setTimeout(()=> els.toast.style.display='none', ms);
+  // ---- notifications
+  els.notifBtn.addEventListener('click', async()=>{
+    if(!('Notification' in window)) { showToast('通知に未対応のブラウザ'); return; }
+    const perm = await Notification.requestPermission();
+    if(perm==='granted'){ state.notif=true; showToast('通知を許可しました'); } else { showToast('通知は許可されませんでした'); }
+  });
+  function notify(title,body){ if(!state.notif || !('Notification' in window) || Notification.permission!=='granted') return; try{ new Notification(title,{ body }); }catch(e){} }
+
+  // ---- drawing
+  function draw(){
+    const w=canvas.width, h=canvas.height; ctx.clearRect(0,0,w,h);
+    // background breathing gradient
+    const t = (now()/1000)%10; const a = 0.15+0.05*Math.sin(t);
+    const grd = ctx.createRadialGradient(w*0.2,h*0.1,100,w*0.8,h*0.9, Math.max(w,h));
+    grd.addColorStop(0,`rgba(59,130,246,${a})`); grd.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=grd; ctx.fillRect(0,0,w,h);
+
+    if(state.mode==='work'){
+      drawRing();
+      drawTip('作業中','20分集中 → 20秒休憩', 'リングが満タンになったら休憩へ。');
+    } else {
+      drawHorizon();
+      drawTip('休憩中','遠くの一点を見つめる','できれば6m(20ft)以上');
     }
+  }
 
-    function formatMs(ms){
-      if(!isFinite(ms) || ms<=0) return '—';
-      return Math.round(ms) + ' ms';
+  function drawRing(){
+    const w=canvas.width,h=canvas.height; const cx=w/2, cy=h/2; const r=Math.min(w,h)/3.2;
+    const prog = state.ring.progress; // 0..1
+    // track
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.strokeStyle='rgba(148,163,184,.25)'; ctx.lineWidth=18; ctx.stroke();
+    // progress arc
+    ctx.beginPath(); ctx.arc(cx,cy,r,-Math.PI/2,-Math.PI/2 + Math.PI*2*prog); ctx.strokeStyle='rgba(59,130,246,.9)'; ctx.lineWidth=18; ctx.lineCap='round'; ctx.stroke();
+    // center time
+    const remain = Math.max(0, state.endAt - (state.paused? state.pauseStartAt : now()));
+    ctx.fillStyle='#e5e7eb'; ctx.textAlign='center';
+    ctx.font='700 44px system-ui, sans-serif'; ctx.fillText(mmss(remain), cx, cy+14);
+  }
+
+  function drawHorizon(){
+    const w=canvas.width,h=canvas.height; const horizon=h*0.55;
+    // sky gradient
+    const sky=ctx.createLinearGradient(0,0,0,horizon);
+    sky.addColorStop(0,'#0ea5e9'); sky.addColorStop(1,'#0b1220');
+    ctx.fillStyle=sky; ctx.fillRect(0,0,w,horizon);
+    // sun
+    const tt=(now()/1000)%20; const sx=w*0.5 + Math.sin(tt/3)*w*0.2; const sy=horizon*0.6 + Math.cos(tt/2)*20; 
+    const sun=ctx.createRadialGradient(sx,sy,10,sx,sy,90); sun.addColorStop(0,'rgba(251,191,36,0.9)'); sun.addColorStop(1,'rgba(251,191,36,0)');
+    ctx.fillStyle=sun; ctx.beginPath(); ctx.arc(sx,sy,90,0,Math.PI*2); ctx.fill();
+    // mountains
+    drawMountains(horizon, w, h);
+    // subtle moving clouds
+    ctx.globalAlpha=0.2; ctx.fillStyle='#ffffff';
+    for(let i=0;i<3;i++){ const x=((now()/30)+(i*200))%(w+300)-150; const y=80+i*40; ctx.beginPath(); ctx.ellipse(x,y,60,20,0,0,Math.PI*2); ctx.ellipse(x+40,y+8,40,14,0,0,Math.PI*2); ctx.ellipse(x-40,y+10,36,12,0,0,Math.PI*2); ctx.fill(); }
+    ctx.globalAlpha=1;
+  }
+  function drawMountains(horizon,w,h){
+    function ridge(offset,hScale,color){
+      ctx.fillStyle=color; ctx.beginPath(); ctx.moveTo(0,horizon);
+      const peaks=8; for(let i=0;i<=peaks;i++){ const x=(w/peaks)*i; const y=horizon- Math.abs(Math.sin(i*1.3+offset))*hScale - (i%2?20:0); ctx.lineTo(x,y); }
+      ctx.lineTo(w,horizon); ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.closePath(); ctx.fill();
     }
+    ridge(0,120,'#0f1a2e'); ridge(1.2,80,'#0c1526'); ridge(2.1,48,'#09101e');
+    // ground
+    ctx.fillStyle='#060b14'; ctx.fillRect(0,horizon,w,h-horizon);
+    // blink cues
+    const t=(now()/1000)%2; if(t<0.3){ ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fillRect(0,0,w,h);} // gentle blink cue
+  }
 
-    function drawFixation(){
-      const w=canvas.width,h=canvas.height; const cx=w/2, cy=h/2;
-      ctx.save();
-      ctx.strokeStyle = 'rgba(148,163,184,0.9)';
-      ctx.lineWidth = 2; ctx.beginPath();
-      ctx.moveTo(cx-18,cy); ctx.lineTo(cx+18,cy); ctx.moveTo(cx,cy-18); ctx.lineTo(cx,cy+18); ctx.stroke();
-      ctx.restore();
+  function drawTip(title, subtitle, foot){
+    const w=canvas.width; ctx.textAlign='center'; ctx.fillStyle='#e5e7eb';
+    ctx.font='800 20px system-ui,sans-serif'; ctx.fillText(title, w/2, 40);
+    ctx.font='14px system-ui,sans-serif'; ctx.fillStyle='#cbd5e1'; ctx.fillText(subtitle, w/2, 64);
+    ctx.fillStyle='#94a3b8'; ctx.fillText(foot, w/2, 86);
+  }
+
+  // ---- engine
+  let raf=null; function loop(){ draw(); updateUI(); if(state.running && !state.paused){ if(now()>=state.endAt){ onPhaseEnd(); } else { if(state.mode==='work'){ const total=(state.endAt-state.startAt); state.ring.progress = clamp(1-((state.endAt-now())/total),0,1); } } } raf=requestAnimationFrame(loop); }
+
+  function start(){
+    const mins= +els.focusMin.value || 20; const secs= +els.breakSec.value || 20;
+    if(state.mode==='work'){
+      state.running=true; state.paused=false; const t=now(); state.startAt=t; state.endAt=t+mins*60*1000; showToast('作業スタート'); scheduleTick();
+    } else { openBreak(secs); }
+  }
+
+  function onPhaseEnd(){
+    if(state.mode==='work'){
+      // switch to break
+      notify('休憩の時間です','20秒間、遠くの一点にピントを合わせましょう');
+      beep(660,0.2); beep(880,0.2);
+      state.mode='break'; openBreak(+els.breakSec.value||20);
+    } else {
+      // break finished safely
+      // handled in closeBreak()
     }
+  }
 
-    function clearStage(){
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-    }
+  // general timer (UI remain)
+  let tick=null; function scheduleTick(){ if(tick) cancelAnimationFrame(tick); function step(){ if(state.running){ const ms = state.paused? (state.pauseRemain) : (state.endAt-now()); els.statRemain.textContent=mmss(ms); } tick=requestAnimationFrame(step);} tick=requestAnimationFrame(step); }
 
-    function secondsLeft(){
-      if(!state.running) return 0;
-      const elapsed = now() - state.startAt;
-      const ms = clamp(state.endAt - (state.paused? state.pauseStartAt : now()), 0, Infinity);
-      return Math.ceil(ms/1000);
-    }
+  function updateUI(){
+    els.statMode.textContent = state.mode==='work'?'作業':'休憩';
+    els.statBreaks.textContent = state.breaks; els.statStreak.textContent = state.streak; 
+  }
 
-    function updateTimerUI(){
-      const ms = (state.paused? state.pauseRemainingMs : (state.endAt - now()));
-      els.statTime.textContent = ms>0 ? Math.ceil(ms/1000)+'s' : '0s';
-    }
+  // ---- pause / resume
+  els.pauseBtn.addEventListener('click', ()=>{
+    if(!state.running){ return; }
+    if(!state.paused){ state.paused=true; state.pauseStartAt=now(); state.pauseRemain=Math.max(0,state.endAt-now()); showToast('一時停止'); }
+    else { state.paused=false; state.endAt = now()+state.pauseRemain; showToast('再開'); }
+  });
 
-    // ---- break modal (20-20-20)
-    let breakTimer=null, breakRemaining=20;
-    function openBreak(){
-      state.paused=true; els.breakModal.style.display='flex';
-      breakRemaining = 20; els.breakCountdown.textContent = breakRemaining;
-      els.endBreak.disabled = true;
-      if(breakTimer) clearInterval(breakTimer);
-      breakTimer = setInterval(()=>{
-        breakRemaining--; els.breakCountdown.textContent = breakRemaining;
-        if(breakRemaining<=0){ clearInterval(breakTimer); els.endBreak.disabled=false; }
-      },1000);
-    }
-    els.endBreak.addEventListener('click', ()=>{ els.breakModal.style.display='none'; state.paused=false; state.lastBreakAt = now(); scheduleNext(); });
-    els.skipBreak.addEventListener('click', ()=>{ if(breakTimer) clearInterval(breakTimer); els.breakModal.style.display='none'; state.paused=false; state.lastBreakAt = now(); scheduleNext(); });
+  els.resetBtn.addEventListener('click', ()=>{ reset(); });
+  function reset(){ state.running=false; state.paused=false; state.mode='work'; state.ring.progress=0; closeBreak(true); showToast('リセットしました'); updateUI(); }
 
-    // ---- Saccade mode
-    const saccade = {
-      target:null,
-      timeoutId:null,
-      clickHandler:null,
-      baseSize: 38,
-      baseWindow: 1200,
-      minWindow: 380,
-      schedule(){
-        if(!state.running || state.paused) return;
-        clearStage(); drawFixation();
-        const delay = rand(600,1000);
-        saccade.timeoutId = setTimeout(()=>{
-          // pick a peripheral position
-          const w=canvas.width,h=canvas.height,cx=w/2,cy=h/2;
-          const r = Math.min(w,h)*0.42; // spawn radius
-          const ang = rand(0,Math.PI*2);
-          const tx = cx + Math.cos(ang)*r;
-          const ty = cy + Math.sin(ang)*r;
-          const size = clamp(saccade.baseSize - state.level*2, 12, 48);
-          saccade.target = {x:tx,y:ty, r:size, born: now(), life: clamp(saccade.baseWindow - state.level*40, saccade.minWindow, saccade.baseWindow)};
-          drawTrial();
-        }, delay);
-      },
-      reset(){
-        if(saccade.timeoutId) clearTimeout(saccade.timeoutId);
-        saccade.target=null;
-      }
-    };
+  // ---- break modal + flow
+  function openBreak(seconds){
+    state.paused=true; state.running=true; // running but paused drawing ring
+    // set an endAt for break to show remaining in stat
+    const t=now(); state.startAt=t; state.endAt=t+seconds*1000; state.breakRemaining=seconds; els.breakCountdown.textContent=state.breakRemaining; els.endBreak.disabled=true; els.breakModal.style.display='flex';
+    if(state.breakTimer) clearInterval(state.breakTimer);
+    state.breakTimer=setInterval(()=>{
+      state.breakRemaining--; els.breakCountdown.textContent=state.breakRemaining; if(state.breakRemaining<=0){ clearInterval(state.breakTimer); els.endBreak.disabled=false; beep(988,0.18); beep(1319,0.18); notify('休憩完了','お疲れさまです。作業に戻りましょう'); }
+    },1000);
+  }
 
-    function drawTrial(){
-      clearStage(); drawFixation();
-      if(!saccade.target) return;
-      const t = saccade.target; // circle
-      ctx.save();
-      ctx.beginPath(); ctx.arc(t.x,t.y,t.r,0,Math.PI*2);
-      ctx.fillStyle = 'rgba(34,197,94,0.9)'; ctx.fill();
-      ctx.restore();
+  function closeBreak(skip=false){
+    if(state.breakTimer) { clearInterval(state.breakTimer); state.breakTimer=null; }
+    els.breakModal.style.display='none';
+    if(!skip){ state.breaks++; state.streak++; save(); showToast('+1 ブレイク達成！'); }
+    else { state.streak=0; save(); showToast('スキップしました'); }
+    // back to work phase
+    state.mode='work'; state.paused=false; const mins= +els.focusMin.value || 20; const t=now(); state.startAt=t; state.endAt=t+mins*60*1000; if(els.autoLoop.value==='off'){ state.running=false; }
+  }
 
-      // expire check
-      const left = t.life - (now() - t.born);
-      if(left<=0){
-        // miss
-        state.level = Math.max(1, state.level-1);
-        state.score = Math.max(0, state.score-1);
-        updateUI(); showToast('ミス…');
-        saccade.target=null; scheduleNext(); return;
-      }
-      requestAnimationFrame(drawTrial);
-    }
+  els.endBreak.addEventListener('click', ()=>{ closeBreak(false); });
+  els.skipBreak.addEventListener('click', ()=>{ closeBreak(true); });
 
-    canvas.addEventListener('click', (e)=>{
-      if(!state.running || state.paused) return;
-      if(state.mode !== 'saccade') return;
-      const rect = canvas.getBoundingClientRect();
-      const x = (e.clientX - rect.left) * (canvas.width/rect.width);
-      const y = (e.clientY - rect.top) * (canvas.height/rect.height);
-      if(saccade.target){
-        const dx = x - saccade.target.x; const dy = y - saccade.target.y;
-        const hit = Math.hypot(dx,dy) <= saccade.target.r;
-        if(hit){
-          const rt = now() - saccade.target.born;
-          state.rtList.push(rt);
-          state.score += 2;
-          if(state.score % 6 === 0) state.level++;
-          updateUI(); showToast('ナイス！ '+Math.round(rt)+' ms');
-          saccade.target=null; scheduleNext();
-        }
-      }
-    });
+  // ---- sound toggle
+  els.soundBtn.addEventListener('click', ()=>{ state.sound=!state.sound; els.soundBtn.textContent = state.sound? '🔊 サウンド: オン' : '🔇 サウンド: オフ'; });
 
-    // ---- Contrast mode
-    const contrast = {
-      grid: 3,
-      delta: 32, // contrast difference (start)
-      minDelta: 4,
-      base: 180,
-      targetIdx: 0,
-      cellW: 0,
-      cellH: 0,
-      layout: [],
-      build(){
-        const w=canvas.width, h=canvas.height;
-        contrast.cellW = Math.floor(w / (contrast.grid+2));
-        contrast.cellH = Math.floor(h / (contrast.grid+2));
-        contrast.layout = [];
-        const total = contrast.grid*contrast.grid;
-        contrast.targetIdx = Math.floor(Math.random()*total);
-        for(let i=0;i<total;i++){
-          const row = Math.floor(i/contrast.grid);
-          const col = i%contrast.grid;
-          const x = Math.floor((col+1.5)*contrast.cellW);
-          const y = Math.floor((row+1.5)*contrast.cellH);
-          const val = i===contrast.targetIdx ? (contrast.base - contrast.delta) : contrast.base;
-          contrast.layout.push({x,y,w:contrast.cellW*0.8,h:contrast.cellH*0.8,val});
-        }
-      },
-      draw(){
-        clearStage(); drawFixation();
-        for(const c of contrast.layout){
-          ctx.fillStyle = `rgb(${c.val},${c.val},${c.val})`;
-          ctx.fillRect(c.x - c.w/2, c.y - c.h/2, c.w, c.h);
-        }
-      },
-      handleClick(x,y){
-        const total = contrast.layout.length;
-        for(let i=0;i<total;i++){
-          const c = contrast.layout[i];
-          if(x>=c.x-c.w/2 && x<=c.x+c.w/2 && y>=c.y-c.h/2 && y<=c.y+c.h/2){
-            const correct = (i===contrast.targetIdx);
-            if(correct){
-              state.score += 1;
-              state.level += (state.score%5===0)?1:0;
-              state.rtList.push(0); // placeholder, not timing-based
-              contrast.delta = Math.max(contrast.minDelta, Math.round(contrast.delta*0.9));
-              if(state.level%2===0 && contrast.grid<6) contrast.grid++;
-              showToast('正解！ コントラスト↓');
-            } else {
-              state.score = Math.max(0, state.score-1);
-              contrast.delta = Math.min(64, Math.round(contrast.delta*1.1));
-              showToast('ハズレ… コントラスト↑');
-            }
-            updateUI(); contrast.build(); contrast.draw();
-            break;
-          }
-        }
-      }
-    };
+  // ---- controls
+  els.startBtn.addEventListener('click', ()=>{ if(!state.running){ state.mode='work'; } start(); });
 
-    canvas.addEventListener('mousedown', (e)=>{
-      if(!state.running || state.paused) return;
-      if(state.mode !== 'contrast') return;
-      const rect = canvas.getBoundingClientRect();
-      const x = (e.clientX - rect.left) * (canvas.width/rect.width);
-      const y = (e.clientY - rect.top) * (canvas.height/rect.height);
-      contrast.handleClick(x,y);
-    });
+  // ---- keyboard shortcuts
+  window.addEventListener('keydown', (e)=>{
+    if(e.key===' '){ e.preventDefault(); if(!state.running){ start(); } else { els.pauseBtn.click(); } }
+    if(e.key==='r'){ reset(); }
+  });
 
-    // ---- session control
-    function resetState(){
-      state.running=false; state.paused=false;
-      state.level=1; state.score=0; state.rtList=[];
-      state.startAt=0; state.endAt=0; state.remainingMs=0; state.lastBreakAt=0;
-      saccade.reset(); clearStage(); drawFixation(); updateUI();
-      els.pauseBtn.disabled=true; els.resetBtn.disabled=true; els.startBtn.disabled=false;
-    }
+  // ---- bootstrap
+  function init(){ state.running=false; state.paused=false; state.mode='work'; state.ring.progress=0; updateUI(); scheduleTick(); loop(); }
+  init();
 
-    function start(){
-      state.mode = els.mode.value; state.eye = els.eye.value;
-      const diff = +els.difficulty.value; const mins = +els.duration.value;
-      state.level = clamp(diff,1,10);
-      state.score = 0; state.rtList=[];
-      state.running=true; state.paused=false;
-      const nowt = now();
-      state.startAt = nowt; state.endAt = nowt + mins*60*1000; state.lastBreakAt = nowt;
-      els.pauseBtn.disabled=false; els.resetBtn.disabled=false; els.startBtn.disabled=true;
-      updateUI();
-      if(state.mode==='saccade'){ scheduleNext(); }
-      else if(state.mode==='contrast'){ contrast.grid=3; contrast.delta= 12 + (11 - state.level)*2; contrast.build(); contrast.draw(); scheduleTick(); }
-      showEyeHint();
-    }
-
-    function showEyeHint(){
-      if(state.eye==='right'){ showToast('左目を軽く覆って右目でプレイ'); }
-      if(state.eye==='left'){ showToast('右目を軽く覆って左目でプレイ'); }
-    }
-
-    function pause(){
-      if(!state.running) return;
-      if(!state.paused){
-        state.paused=true; state.pauseStartAt = now(); state.pauseRemainingMs = Math.max(0, state.endAt - now());
-      } else {
-        state.paused=false; state.endAt = now() + state.pauseRemainingMs;
-        scheduleNext();
-      }
-      updateUI();
-    }
-
-    function scheduleNext(){
-      if(!state.running) return;
-      if(state.paused) return;
-      if(now() >= state.endAt){ finish(); return; }
-      if(now() - state.lastBreakAt > 20*60*1000){ openBreak(); return; }
-      if(state.mode==='saccade'){ saccade.schedule(); }
-    }
-
-    // general timer to redraw countdown
-    let tickId=null;
-    function scheduleTick(){
-      if(tickId) cancelAnimationFrame(tickId);
-      function step(){ updateTimerUI(); if(state.running && !state.paused){ if(now()>=state.endAt){ finish(); return; } } tickId=requestAnimationFrame(step); }
-      tickId=requestAnimationFrame(step);
-    }
-
-    function finish(){
-      state.running=false; state.paused=false; updateUI();
-      if(state.mode==='saccade'){ saccade.reset(); }
-      showToast('セッション終了！');
-      // update HS
-      if(state.mode==='saccade' && state.score>hs.saccade){ hs.saccade=state.score; saveHS(); }
-      if(state.mode==='contrast' && state.score>hs.contrast){ hs.contrast=state.score; saveHS(); }
-      updateHSUI();
-      els.pauseBtn.disabled=true; els.startBtn.disabled=false; els.resetBtn.disabled=false;
-    }
-
-    function updateUI(){
-      els.statScore.textContent = state.score;
-      els.statLevel.textContent = state.level;
-      const avg = state.rtList.length? state.rtList.reduce((a,b)=>a+b,0)/state.rtList.length : 0;
-      els.statRt.textContent = formatMs(avg);
-      updateTimerUI();
-    }
-
-    // controls
-    els.startBtn.addEventListener('click', ()=>{ start(); scheduleTick(); });
-    els.pauseBtn.addEventListener('click', ()=>{ pause(); });
-    els.resetBtn.addEventListener('click', ()=>{ resetState(); });
-
-    // init
-    resetState();
-    window.addEventListener('resize', ()=>{ /* canvas auto scales via CSS */ if(state.mode==='contrast' && state.running){ contrast.build(); contrast.draw(); }});
-  })();
-  </script>
+  // resize handler
+  window.addEventListener('resize', ()=>{ /* canvas scales via CSS; bitmap size fixed */ });
+})();
+</script>
 </body>
 </html>

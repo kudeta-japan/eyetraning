@@ -3,308 +3,395 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>20-20-20ルールゲーム『Distant Gaze』</title>
+<title>ハンバーガーづくりゲーム『Burger Rush!』</title>
 <style>
   :root{
-    --bg:#0b1220; --panel:#0f172a; --muted:#64748b; --text:#e5e7eb; --green:#10b981; --blue:#3b82f6; --amber:#f59e0b; --red:#ef4444;
+    --bg:#0b1220; --panel:#0f172a; --muted:#94a3b8; --text:#e5e7eb; --green:#10b981; --blue:#3b82f6; --amber:#f59e0b; --red:#ef4444; --pink:#ec4899; --brown:#8b5e3c;
   }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans JP",sans-serif}
-  .wrap{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:16px;height:100%}
-  .panel{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.06);border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.3)}
-  .left{padding:16px;display:flex;flex-direction:column;gap:14px}
-  .title{font-weight:800;font-size:22px}
-  .subtitle{font-size:12px;color:#cbd5e1}
-  label{font-size:13px;color:#cbd5e1}
-  input,select,button{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:#0b1220;color:var(--text)}
-  button{cursor:pointer;font-weight:700}
-  .primary{background:linear-gradient(180deg,var(--blue),#1d4ed8);border:none}
-  .ghost{background:transparent}
+  .wrap{display:grid;grid-template-columns:320px 1fr 280px;gap:16px;padding:16px;height:100%}
+  .panel{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.06);border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.3);overflow:hidden}
+  .left{padding:14px;display:flex;flex-direction:column;gap:12px}
+  .right{padding:14px;display:flex;flex-direction:column;gap:12px}
+  .title{font-weight:800;font-size:20px}
+  .small{font-size:12px;color:#cbd5e1}
+  button,input,select{border-radius:10px;border:1px solid rgba(255,255,255,.1);background:#0b1220;color:var(--text);padding:9px}
+  button.primary{background:linear-gradient(180deg,var(--blue),#1d4ed8);border:none;font-weight:800;cursor:pointer}
+  button.ghost{background:transparent;cursor:pointer}
   .row{display:flex;gap:8px;align-items:center}
-  .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .orders{display:flex;flex-direction:column;gap:10px}
+  .order{background:#0b1220;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px}
+  .order h4{margin:0 0 4px;font-size:14px}
+  .ingredients{display:flex;flex-wrap:wrap;gap:6px}
+  .ing{display:inline-flex;align-items:center;gap:6px;padding:6px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.12);font-size:12px;color:#cbd5e1}
+  .bar{height:6px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:6px}
+  .bar>span{display:block;height:100%;background:linear-gradient(90deg,var(--green),#22c55e)}
+
+  .kitchen{position:relative;display:grid;grid-template-rows:1fr 180px;gap:10px;padding:12px}
+  .stations{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;height:100%}
+  .station{background:#0b1220;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px;position:relative}
+  .station h3{margin:0 0 8px;font-size:16px}
+
+  /* Grill */
+  .grill{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .slot{background:#111827;border:1px dashed rgba(255,255,255,.18);border-radius:12px;height:120px;position:relative;display:flex;align-items:center;justify-content:center}
+  .patty{width:68px;height:68px;border-radius:50%;position:relative}
+  .patty::after{content:"";position:absolute;inset:10%;border-radius:50%;box-shadow:inset 0 12px 18px rgba(0,0,0,.35)}
+  .patty.raw{background:#8b3a2a}
+  .patty.med{background:#7a3e2c}
+  .patty.well{background:#5c3022}
+  .patty.burnt{background:#2b2018}
+  .slot .tag{position:absolute;top:6px;left:6px;font-size:11px;color:#e5e7eb;background:rgba(0,0,0,.3);padding:3px 6px;border-radius:999px;border:1px solid rgba(255,255,255,.15)}
+  .slot .btns{position:absolute;bottom:6px;left:6px;right:6px;display:flex;gap:6px}
+  .slot button{flex:1;padding:6px 8px;font-size:12px}
+
+  /* Assembly */
+  .plate{background:#0a1220;border:1px solid rgba(255,255,255,.12);border-radius:14px;height:100%;display:flex;align-items:center;justify-content:center;position:relative}
+  .drop-zone{width:240px;min-height:120px;border:2px dashed rgba(255,255,255,.2);border-radius:12px;padding:12px}
+  .stack{display:flex;flex-direction:column;align-items:center;gap:2px}
+  .piece{width:160px;height:24px;border-radius:12px;position:relative}
+  .piece.bun-b{background:linear-gradient(#f5d79e,#e3b86b);height:28px;border-radius:12px 12px 20px 20px}
+  .piece.bun-t{background:linear-gradient(#ebb66b,#e09b43);height:30px;border-radius:20px 20px 12px 12px;box-shadow:inset 0 -6px 0 rgba(0,0,0,.1)}
+  .piece.lettuce{background:linear-gradient(#34d399,#059669)}
+  .piece.cheese{background:linear-gradient(#fde047,#f59e0b)}
+  .piece.tomato{background:linear-gradient(#ef4444,#b91c1c)}
+  .piece.onion{background:linear-gradient(#e9d5ff,#c4b5fd)}
+  .piece.bacon{background:linear-gradient(#fca5a5,#b91c1c)}
+  .piece.pickle{background:linear-gradient(#86efac,#16a34a)}
+  .piece.sauce{background:linear-gradient(#f472b6,#ec4899);height:10px}
+  .piece.patty{background:linear-gradient(#8b5e3c,#6b442c)}
+  .piece.patty.med{box-shadow:inset 0 0 0 3px rgba(16,185,129,.35)}
+  .piece.patty.well{box-shadow:inset 0 0 0 3px rgba(245,158,11,.35)}
+  .piece.patty.burnt{box-shadow:inset 0 0 0 3px rgba(239,68,68,.35)}
+
+  /* Bins */
+  .bins{display:flex;gap:10px;overflow-x:auto;padding:10px;background:#0b1220;border-top:1px solid rgba(255,255,255,.08);border-radius:12px}
+  .bin{min-width:110px;background:#0b1220;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;align-items:center}
+  .bin .icon{font-size:28px}
+  .bin .label{font-size:12px;color:#cbd5e1}
+  .drag{cursor:grab}
+
+  .serve{position:absolute;right:12px;bottom:12px}
+
+  .score{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .stat{background:#0b1220;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px}
-  .k{font-size:11px;color:#94a3b8}.v{font-size:18px;font-weight:800}
-  .area{position:relative}
-  canvas{width:100%;height:calc(100vh - 32px);display:block;background:radial-gradient(900px 500px at 0% -10%,rgba(59,130,246,.08),transparent), radial-gradient(900px 700px at 110% 110%,rgba(16,185,129,.08),transparent), #0b1220;border-radius:16px}
-  .badge{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border-radius:999px;background:#0b1220;border:1px solid rgba(255,255,255,.1);font-size:12px;color:#cbd5e1}
-  .note{font-size:12px;color:#94a3b8;line-height:1.7}
-  .hr{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent)}
-  .toast{position:absolute;left:50%;top:16px;transform:translateX(-50%);padding:10px 14px;border-radius:12px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);backdrop-filter:blur(6px);font-weight:700}
+  .stat .k{font-size:11px;color:#94a3b8}.stat .v{font-size:18px;font-weight:800}
+  .tips{font-size:12px;color:#cbd5e1;line-height:1.7}
 
-  .modal{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);backdrop-filter:blur(4px)}
-  .modal .card{max-width:560px;padding:20px;border-radius:16px;background:#0b1220;border:1px solid rgba(255,255,255,.12)}
-  .modal h3{margin:0 0 8px;font-size:20px}
-  .modal p{margin:0 0 12px;color:#cbd5e1;font-size:14px;line-height:1.7}
+  .toast{position:fixed;left:50%;top:12px;transform:translateX(-50%);padding:10px 14px;border-radius:12px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);backdrop-filter:blur(6px);font-weight:700;display:none}
 
-  @media (max-width:1024px){.wrap{grid-template-columns:1fr} canvas{height:58vh}}
+  @media(max-width:1100px){.wrap{grid-template-columns:1fr;grid-auto-rows:auto} .stations{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <aside class="panel left">
-      <div class="row" style="justify-content:flex-start">
-        <span class="badge">👀 20-20-20ルール ゲーム『Distant Gaze』</span>
-      </div>
+<div class="wrap">
+  <!-- Orders -->
+  <aside class="panel left">
+    <div class="title">注文キュー</div>
+    <div id="orders" class="orders"></div>
+    <div class="row">
+      <button id="startBtn" class="primary">▶ ゲーム開始</button>
+      <button id="resetBtn" class="ghost">⟲ リセット</button>
+    </div>
+    <div class="small">制限時間 3:00 / 注文をできるだけ正確に、素早く提供しよう！</div>
+  </aside>
 
-      <div class="title">セッション設定</div>
-      <div>
-        <label for="focusMin">作業(分) — 推奨20</label>
-        <input id="focusMin" type="number" min="5" max="120" value="20"/>
-      </div>
-      <div>
-        <label for="breakSec">休憩(秒) — 推奨20</label>
-        <input id="breakSec" type="number" min="10" max="120" value="20"/>
-      </div>
-      <div>
-        <label for="autoLoop">自動で繰り返す</label>
-        <select id="autoLoop"><option value="on">オン</option><option value="off">オフ</option></select>
-      </div>
-      <div class="row">
-        <button id="startBtn" class="primary">▶ 開始 / 再開</button>
-        <button id="pauseBtn" class="ghost">⏸ 一時停止</button>
-        <button id="resetBtn" class="ghost">⟲ リセット</button>
-      </div>
-      <div class="row">
-        <button id="notifBtn" class="ghost">🔔 通知を許可</button>
-        <button id="soundBtn" class="ghost">🔊 サウンド: オン</button>
-      </div>
-
-      <div class="hr"></div>
-      <div class="title">ステータス</div>
-      <div class="stats">
-        <div class="stat"><div class="k">モード</div><div id="statMode" class="v">作業</div></div>
-        <div class="stat"><div class="k">残り時間</div><div id="statRemain" class="v">20:00</div></div>
-        <div class="stat"><div class="k">完了休憩</div><div id="statBreaks" class="v">0</div></div>
-        <div class="stat"><div class="k">連続達成</div><div id="statStreak" class="v">0</div></div>
-      </div>
-
-      <div class="title">遊び方</div>
-      <div class="note">
-        1) 「開始」すると<b>作業20分</b>のリングが進みます。<br/>
-        2) 終了後、自動で<b>休憩20秒</b>の「遠くを見る」モードへ。画面の地平線をぼんやり眺め、<b>6m（20フィート）以上</b>の遠くにピントを合わせるイメージで休めましょう。<br/>
-        3) 休憩を最後までやり切るとスコア&連続達成数が増えます。スキップすると連続が途切れます。<br/>
-        4) 目を乾かさないよう、休憩中はゆっくり<b>10回程度の瞬き</b>を。
-      </div>
-
-      <div class="title">注意</div>
-      <div class="note">本ツールはセルフケア用の補助です。医療行為ではありません。痛み・見えにくさが増す場合は中止し、眼科へ相談してください。</div>
-    </aside>
-
-    <main class="panel area">
-      <canvas id="stage" width="1400" height="900" aria-label="20-20-20ゲーム" role="img"></canvas>
-      <div id="toast" class="toast" style="display:none"></div>
-
-      <!-- Break Modal -->
-      <div id="breakModal" class="modal" aria-modal="true">
-        <div class="card">
-          <h3>20秒ブレイク！ 遠くを見よう</h3>
-          <p>モニターから目を離し、できれば窓の外など<b>6m以上</b>の一点へ視線を。ゆっくり瞬きを繰り返し、肩と首を軽く回しましょう。</p>
-          <p>残り <span id="breakCountdown">20</span> 秒</p>
-          <div class="row">
-            <button id="skipBreak" class="ghost">スキップ</button>
-            <button id="endBreak" class="primary" disabled>再開</button>
-          </div>
+  <!-- Kitchen -->
+  <main class="panel kitchen">
+    <div class="stations">
+      <section class="station">
+        <h3>グリル</h3>
+        <div id="grill" class="grill"></div>
+      </section>
+      <section class="station">
+        <h3>組み立て（ドロップゾーン）</h3>
+        <div class="plate">
+          <div id="drop" class="drop-zone" data-drop></div>
+          <button id="serveBtn" class="primary serve">🍔 提供</button>
         </div>
-      </div>
-    </main>
-  </div>
+      </section>
+    </div>
+
+    <section class="bins" id="bins">
+      <!-- bins filled by JS -->
+    </section>
+  </main>
+
+  <!-- Stats & Tips -->
+  <aside class="panel right">
+    <div class="title">ステータス</div>
+    <div class="score">
+      <div class="stat"><div class="k">スコア</div><div id="statScore" class="v">0</div></div>
+      <div class="stat"><div class="k">コンボ</div><div id="statCombo" class="v">0</div></div>
+      <div class="stat"><div class="k">正確さ</div><div id="statAcc" class="v">—</div></div>
+      <div class="stat"><div class="k">残り時間</div><div id="statTime" class="v">3:00</div></div>
+    </div>
+
+    <div class="title">遊び方</div>
+    <div class="tips">
+      1) <b>生パティ</b>を<b>グリル</b>にドラッグして焼く（ミディアムが基本）。<br>
+      2) バンズや具材を<b>組み立てゾーン</b>へドラッグして積む。<br>
+      3) 注文の並びどおりに完成したら<b>提供</b>で納品！早いほどボーナス。<br>
+      4) パティは焼き過ぎると減点。<br>
+      <span class="small">※具材は下から上に積みます／提供後は自動でリセット</span>
+    </div>
+  </aside>
+</div>
+
+<div id="toast" class="toast"></div>
 
 <script>
 (() => {
-  const canvas = document.getElementById('stage');
-  const ctx = canvas.getContext('2d');
-  const E = id => document.getElementById(id);
-  const els = {
-    focusMin: E('focusMin'), breakSec: E('breakSec'), autoLoop: E('autoLoop'),
-    startBtn: E('startBtn'), pauseBtn: E('pauseBtn'), resetBtn: E('resetBtn'),
-    notifBtn: E('notifBtn'), soundBtn: E('soundBtn'),
-    statMode: E('statMode'), statRemain: E('statRemain'), statBreaks: E('statBreaks'), statStreak: E('statStreak'),
-    toast: E('toast'), breakModal: E('breakModal'), breakCountdown: E('breakCountdown'), endBreak: E('endBreak'), skipBreak: E('skipBreak')
+  const E = sel => document.querySelector(sel);
+  const EC = sel => document.createElement(sel);
+  const ordersEl = E('#orders');
+  const grillEl = E('#grill');
+  const dropZone = E('#drop');
+  const binsEl = E('#bins');
+  const toast = E('#toast');
+  const serveBtn = E('#serveBtn');
+  const startBtn = E('#startBtn');
+  const resetBtn = E('#resetBtn');
+
+  const stat = { score:E('#statScore'), combo:E('#statCombo'), acc:E('#statAcc'), time:E('#statTime') };
+
+  const GAME_TIME = 180000; // 3 min
+  const MAX_ORDERS = 3;
+  const GRILL_SLOTS = 3;
+
+  const ING = {
+    'bun-b': {name:'下バンズ', icon:'🥯', type:'base'},
+    'patty': {name:'パティ', icon:'🍖', type:'patty'},
+    'cheese': {name:'チーズ', icon:'🧀', type:'slice'},
+    'lettuce': {name:'レタス', icon:'🥬', type:'veg'},
+    'tomato': {name:'トマト', icon:'🍅', type:'veg'},
+    'onion': {name:'オニオン', icon:'🧅', type:'veg'},
+    'bacon': {name:'ベーコン', icon:'🥓', type:'meat'},
+    'pickle': {name:'ピクルス', icon:'🥒', type:'veg'},
+    'sauce': {name:'ソース', icon:'🩷', type:'sauce'},
+    'bun-t': {name:'上バンズ', icon:'🥯', type:'top'},
   };
 
-  // ---- state
-  const HS_KEY='distant_gaze_stats_v1';
-  const persisted = JSON.parse(localStorage.getItem(HS_KEY) || '{"breaks":0,"streak":0}');
-  let state = {
-    running:false, paused:false,
-    mode:'work', // 'work' | 'break'
-    startAt:0, endAt:0, // timestamps (ms)
-    breaks: persisted.breaks||0, streak: persisted.streak||0,
-    sound:true, notif:false,
-    // visual
-    ring: {progress:0},
-    // break
-    breakTimer:null, breakRemaining:20,
+  const PRESETS = [
+    {name:'クラシック', parts:['bun-b','patty','cheese','lettuce','tomato','bun-t'], doneness:'med'},
+    {name:'チーズ', parts:['bun-b','patty','cheese','bun-t'], doneness:'med'},
+    {name:'ベーコンチーズ', parts:['bun-b','patty','cheese','bacon','bun-t'], doneness:'med'},
+    {name:'ダブル', parts:['bun-b','patty','cheese','patty','cheese','bun-t'], doneness:'med'},
+    {name:'ピクルス&オニオン', parts:['bun-b','patty','cheese','pickle','onion','bun-t'], doneness:'med'},
+    {name:'レタストマト', parts:['bun-b','patty','lettuce','tomato','bun-t'], doneness:'med'},
+  ];
+
+  const state = {
+    running:false,
+    startAt:0, endAt:0,
+    orders:[],
+    plate:[], // current stack bottom->top; patty has {id:'patty', doneness}
+    score:0, combo:0, correct:0, attempts:0,
+    grill:[], // slots
+    timer:null
   };
 
-  function save(){ localStorage.setItem(HS_KEY, JSON.stringify({breaks:state.breaks, streak:state.streak})); }
-
-  // ---- utils
-  const now=()=>performance.now();
-  const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
   function mmss(ms){ ms=Math.max(0,ms); const s=Math.ceil(ms/1000); const m=Math.floor(s/60); const ss=('0'+(s%60)).slice(-2); return `${m}:${ss}`; }
-  function showToast(msg,ms=1200){ els.toast.textContent=msg; els.toast.style.display='block'; setTimeout(()=> els.toast.style.display='none',ms); }
+  function showToast(msg,ms=1200){ toast.textContent=msg; toast.style.display='block'; setTimeout(()=> toast.style.display='none', ms); }
 
-  // ---- audio
-  let actx=null; function beep(freq=880,dur=0.15){ if(!state.sound) return; try{ actx = actx||new (window.AudioContext||window.webkitAudioContext)(); const o=actx.createOscillator(); const g=actx.createGain(); o.frequency.value=freq; o.type='sine'; g.gain.value=0.0001; o.connect(g); g.connect(actx.destination); o.start(); const t=actx.currentTime; g.gain.exponentialRampToValueAtTime(0.2,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.stop(t+dur+0.02);}catch(e){} }
+  // --- Orders
+  function newOrder(){
+    const p = PRESETS[Math.floor(Math.random()*PRESETS.length)];
+    const ttl = 45000 + Math.random()*30000; // 45-75s
+    return {
+      id: Math.random().toString(36).slice(2,8),
+      name: p.name,
+      parts: [...p.parts],
+      doneness: p.doneness, // for all patties in this order
+      created: performance.now(),
+      expires: performance.now()+ttl
+    };
+  }
+  function fillOrders(){ while(state.orders.length<MAX_ORDERS) state.orders.push(newOrder()); renderOrders(); }
 
-  // ---- notifications
-  els.notifBtn.addEventListener('click', async()=>{
-    if(!('Notification' in window)) { showToast('通知に未対応のブラウザ'); return; }
-    const perm = await Notification.requestPermission();
-    if(perm==='granted'){ state.notif=true; showToast('通知を許可しました'); } else { showToast('通知は許可されませんでした'); }
+  function renderOrders(){
+    ordersEl.innerHTML='';
+    state.orders.forEach((o,idx)=>{
+      const card=EC('div'); card.className='order';
+      const h=EC('h4'); h.textContent = `${idx===0?'▶ ':''}${o.name}`; card.appendChild(h);
+      const ing=EC('div'); ing.className='ingredients';
+      o.parts.forEach(p=>{ const b=EC('div'); b.className='ing'; b.textContent = `${ING[p].icon} ${ING[p].name}`; ing.appendChild(b); });
+      if(o.parts.includes('patty')){ const d=EC('div'); d.className='ing'; d.textContent = `🔥 焼き：ミディアム`; ing.appendChild(d); }
+      card.appendChild(ing);
+      const bar=EC('div'); bar.className='bar'; const span=EC('span'); bar.appendChild(span); card.appendChild(bar);
+      // progress update
+      const total = o.expires - o.created; const left = Math.max(0, o.expires - performance.now()); const prog = 1 - left/total; span.style.width = Math.max(0, Math.min(1, prog))*100 + '%';
+      if(left<15000) span.style.background='linear-gradient(90deg,var(--amber),#f59e0b)';
+      if(left<6000) span.style.background='linear-gradient(90deg,var(--red),#ef4444)';
+      ordersEl.appendChild(card);
+    });
+  }
+
+  // --- Grill
+  function initGrill(){
+    grillEl.innerHTML=''; state.grill=[];
+    for(let i=0;i<GRILL_SLOTS;i++){
+      const slot=EC('div'); slot.className='slot'; slot.dataset.slot=i;
+      const tag=EC('div'); tag.className='tag'; tag.textContent=`空き`; slot.appendChild(tag);
+      slot.addEventListener('dragover', e=>{ e.preventDefault(); });
+      slot.addEventListener('drop', e=>{ e.preventDefault(); const dt=e.dataTransfer.getData('text/plain'); if(dt==='patty-raw'){ placeRawPatty(i); }});
+      grillEl.appendChild(slot);
+      state.grill.push({status:'empty', placed:0, el:slot});
+    }
+  }
+
+  function placeRawPatty(i){
+    const g = state.grill[i]; if(!g || g.status!=='empty') return;
+    g.status='cooking'; g.placed=performance.now();
+    const p = EC('div'); p.className='patty raw'; p.draggable=true; p.addEventListener('dragstart', ev=>{ ev.dataTransfer.setData('application/json', JSON.stringify({id:'patty', doneness:currentDoneness(i)})); });
+    const tag = g.el.querySelector('.tag'); tag.textContent='焼き中';
+    const btns = EC('div'); btns.className='btns';
+    const flip = EC('button'); flip.textContent='返す'; flip.addEventListener('click', ()=>{ showToast('ジュッ！'); });
+    const take = EC('button'); take.textContent='取り出す'; take.addEventListener('click', ()=>{ pickupPatty(i); });
+    btns.appendChild(flip); btns.appendChild(take);
+    g.el.appendChild(p); g.el.appendChild(btns);
+  }
+
+  function currentDoneness(i){
+    const g = state.grill[i]; if(!g || g.status==='empty') return 'raw';
+    const t = (performance.now()-g.placed)/1000; // seconds
+    if(t<4) return 'raw';
+    if(t<7) return 'med';
+    if(t<10) return 'well';
+    return 'burnt';
+  }
+
+  function paintGrill(){
+    state.grill.forEach((g,idx)=>{
+      const tag = g.el.querySelector('.tag');
+      if(g.status==='empty'){ tag.textContent='空き'; return; }
+      const d = currentDoneness(idx);
+      const patty = g.el.querySelector('.patty');
+      patty.className = 'patty ' + (d==='raw'?'raw':(d==='med'?'med':(d==='well'?'well':'burnt')));
+      tag.textContent = d==='raw'? '焼き始め' : d==='med'? 'ミディアム' : d==='well'? 'ウェル' : '焦げ';
+    });
+  }
+
+  function pickupPatty(i){
+    const g = state.grill[i]; if(!g || g.status==='empty') return;
+    const d = currentDoneness(i);
+    // make a draggable ghost from grill to plate by programmatic add to plate
+    addToPlate({id:'patty', doneness:d});
+    // clear slot
+    g.status='empty'; g.placed=0; g.el.innerHTML='';
+    const tag=EC('div'); tag.className='tag'; tag.textContent='空き'; g.el.appendChild(tag);
+  }
+
+  // --- Plate (assembly)
+  function renderPlate(){
+    dropZone.innerHTML='';
+    const stack=EC('div'); stack.className='stack';
+    state.plate.forEach(piece=>{
+      const el=EC('div'); el.className='piece ' + piece.id + (piece.id==='patty' && piece.doneness? (' '+piece.doneness):'');
+      el.title = piece.id==='patty'? `パティ(${piece.doneness})` : ING[piece.id].name;
+      stack.appendChild(el);
+    });
+    dropZone.appendChild(stack);
+  }
+
+  function addToPlate(piece){ state.plate.push(piece); renderPlate(); }
+  function resetPlate(){ state.plate=[]; renderPlate(); }
+
+  // Drop zone accept
+  dropZone.addEventListener('dragover', e=>{ e.preventDefault(); });
+  dropZone.addEventListener('drop', e=>{
+    e.preventDefault();
+    // accept from bins or grill
+    const json = e.dataTransfer.getData('application/json');
+    if(json){ try{ const data=JSON.parse(json); if(data.id==='patty'){ addToPlate({id:'patty', doneness:data.doneness||'raw'}); return; } }catch(err){}
+    }
+    const id = e.dataTransfer.getData('text/plain');
+    if(ING[id]){ addToPlate({id}); }
   });
-  function notify(title,body){ if(!state.notif || !('Notification' in window) || Notification.permission!=='granted') return; try{ new Notification(title,{ body }); }catch(e){} }
 
-  // ---- drawing
-  function draw(){
-    const w=canvas.width, h=canvas.height; ctx.clearRect(0,0,w,h);
-    // background breathing gradient
-    const t = (now()/1000)%10; const a = 0.15+0.05*Math.sin(t);
-    const grd = ctx.createRadialGradient(w*0.2,h*0.1,100,w*0.8,h*0.9, Math.max(w,h));
-    grd.addColorStop(0,`rgba(59,130,246,${a})`); grd.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.fillStyle=grd; ctx.fillRect(0,0,w,h);
+  // --- Bins
+  const BIN_LIST = ['bun-b','patty','cheese','lettuce','tomato','onion','bacon','pickle','sauce','bun-t'];
+  function initBins(){
+    binsEl.innerHTML='';
+    BIN_LIST.forEach(id=>{
+      const bin=EC('div'); bin.className='bin';
+      const icon=EC('div'); icon.className='icon'; icon.textContent=ING[id].icon; bin.appendChild(icon);
+      const label=EC('div'); label.className='label'; label.textContent=ING[id].name; bin.appendChild(label);
+      // draggable token
+      const tok=EC('div'); tok.className='ing drag'; tok.textContent='ドラッグ'; tok.draggable=true;
+      tok.addEventListener('dragstart', e=>{
+        if(id==='patty') e.dataTransfer.setData('text/plain','patty-raw');
+        else e.dataTransfer.setData('text/plain', id);
+      });
+      bin.appendChild(tok);
+      binsEl.appendChild(bin);
+    });
+  }
 
-    if(state.mode==='work'){
-      drawRing();
-      drawTip('作業中','20分集中 → 20秒休憩', 'リングが満タンになったら休憩へ。');
+  // --- Serve
+  serveBtn.addEventListener('click', ()=>{
+    if(state.orders.length===0) return;
+    const order = state.orders[0];
+    state.attempts++;
+    const ok = evaluate(state.plate, order);
+    if(ok.ok){
+      const bonus = Math.max(0, Math.floor((order.expires - performance.now())/1000));
+      const cookPenalty = ok.cookPenalty; // 0..something
+      let add = 50 + bonus - cookPenalty;
+      if(add<10) add=10;
+      state.score += add;
+      state.combo += 1; state.correct += 1;
+      showToast(`✅ 提供成功 +${add}（ボーナス${bonus} / 焼きペナ-${cookPenalty}）`);
+      state.orders.shift();
+      resetPlate();
+      fillOrders();
     } else {
-      drawHorizon();
-      drawTip('休憩中','遠くの一点を見つめる','できれば6m(20ft)以上');
+      state.combo = 0;
+      state.score = Math.max(0, state.score-10);
+      showToast('❌ レシピが違います（順番・具材を確認）');
     }
-  }
-
-  function drawRing(){
-    const w=canvas.width,h=canvas.height; const cx=w/2, cy=h/2; const r=Math.min(w,h)/3.2;
-    const prog = state.ring.progress; // 0..1
-    // track
-    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.strokeStyle='rgba(148,163,184,.25)'; ctx.lineWidth=18; ctx.stroke();
-    // progress arc
-    ctx.beginPath(); ctx.arc(cx,cy,r,-Math.PI/2,-Math.PI/2 + Math.PI*2*prog); ctx.strokeStyle='rgba(59,130,246,.9)'; ctx.lineWidth=18; ctx.lineCap='round'; ctx.stroke();
-    // center time
-    const remain = Math.max(0, state.endAt - (state.paused? state.pauseStartAt : now()));
-    ctx.fillStyle='#e5e7eb'; ctx.textAlign='center';
-    ctx.font='700 44px system-ui, sans-serif'; ctx.fillText(mmss(remain), cx, cy+14);
-  }
-
-  function drawHorizon(){
-    const w=canvas.width,h=canvas.height; const horizon=h*0.55;
-    // sky gradient
-    const sky=ctx.createLinearGradient(0,0,0,horizon);
-    sky.addColorStop(0,'#0ea5e9'); sky.addColorStop(1,'#0b1220');
-    ctx.fillStyle=sky; ctx.fillRect(0,0,w,horizon);
-    // sun
-    const tt=(now()/1000)%20; const sx=w*0.5 + Math.sin(tt/3)*w*0.2; const sy=horizon*0.6 + Math.cos(tt/2)*20; 
-    const sun=ctx.createRadialGradient(sx,sy,10,sx,sy,90); sun.addColorStop(0,'rgba(251,191,36,0.9)'); sun.addColorStop(1,'rgba(251,191,36,0)');
-    ctx.fillStyle=sun; ctx.beginPath(); ctx.arc(sx,sy,90,0,Math.PI*2); ctx.fill();
-    // mountains
-    drawMountains(horizon, w, h);
-    // subtle moving clouds
-    ctx.globalAlpha=0.2; ctx.fillStyle='#ffffff';
-    for(let i=0;i<3;i++){ const x=((now()/30)+(i*200))%(w+300)-150; const y=80+i*40; ctx.beginPath(); ctx.ellipse(x,y,60,20,0,0,Math.PI*2); ctx.ellipse(x+40,y+8,40,14,0,0,Math.PI*2); ctx.ellipse(x-40,y+10,36,12,0,0,Math.PI*2); ctx.fill(); }
-    ctx.globalAlpha=1;
-  }
-  function drawMountains(horizon,w,h){
-    function ridge(offset,hScale,color){
-      ctx.fillStyle=color; ctx.beginPath(); ctx.moveTo(0,horizon);
-      const peaks=8; for(let i=0;i<=peaks;i++){ const x=(w/peaks)*i; const y=horizon- Math.abs(Math.sin(i*1.3+offset))*hScale - (i%2?20:0); ctx.lineTo(x,y); }
-      ctx.lineTo(w,horizon); ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.closePath(); ctx.fill();
-    }
-    ridge(0,120,'#0f1a2e'); ridge(1.2,80,'#0c1526'); ridge(2.1,48,'#09101e');
-    // ground
-    ctx.fillStyle='#060b14'; ctx.fillRect(0,horizon,w,h-horizon);
-    // blink cues
-    const t=(now()/1000)%2; if(t<0.3){ ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fillRect(0,0,w,h);} // gentle blink cue
-  }
-
-  function drawTip(title, subtitle, foot){
-    const w=canvas.width; ctx.textAlign='center'; ctx.fillStyle='#e5e7eb';
-    ctx.font='800 20px system-ui,sans-serif'; ctx.fillText(title, w/2, 40);
-    ctx.font='14px system-ui,sans-serif'; ctx.fillStyle='#cbd5e1'; ctx.fillText(subtitle, w/2, 64);
-    ctx.fillStyle='#94a3b8'; ctx.fillText(foot, w/2, 86);
-  }
-
-  // ---- engine
-  let raf=null; function loop(){ draw(); updateUI(); if(state.running && !state.paused){ if(now()>=state.endAt){ onPhaseEnd(); } else { if(state.mode==='work'){ const total=(state.endAt-state.startAt); state.ring.progress = clamp(1-((state.endAt-now())/total),0,1); } } } raf=requestAnimationFrame(loop); }
-
-  function start(){
-    const mins= +els.focusMin.value || 20; const secs= +els.breakSec.value || 20;
-    if(state.mode==='work'){
-      state.running=true; state.paused=false; const t=now(); state.startAt=t; state.endAt=t+mins*60*1000; showToast('作業スタート'); scheduleTick();
-    } else { openBreak(secs); }
-  }
-
-  function onPhaseEnd(){
-    if(state.mode==='work'){
-      // switch to break
-      notify('休憩の時間です','20秒間、遠くの一点にピントを合わせましょう');
-      beep(660,0.2); beep(880,0.2);
-      state.mode='break'; openBreak(+els.breakSec.value||20);
-    } else {
-      // break finished safely
-      // handled in closeBreak()
-    }
-  }
-
-  // general timer (UI remain)
-  let tick=null; function scheduleTick(){ if(tick) cancelAnimationFrame(tick); function step(){ if(state.running){ const ms = state.paused? (state.pauseRemain) : (state.endAt-now()); els.statRemain.textContent=mmss(ms); } tick=requestAnimationFrame(step);} tick=requestAnimationFrame(step); }
-
-  function updateUI(){
-    els.statMode.textContent = state.mode==='work'?'作業':'休憩';
-    els.statBreaks.textContent = state.breaks; els.statStreak.textContent = state.streak; 
-  }
-
-  // ---- pause / resume
-  els.pauseBtn.addEventListener('click', ()=>{
-    if(!state.running){ return; }
-    if(!state.paused){ state.paused=true; state.pauseStartAt=now(); state.pauseRemain=Math.max(0,state.endAt-now()); showToast('一時停止'); }
-    else { state.paused=false; state.endAt = now()+state.pauseRemain; showToast('再開'); }
+    updateStats(); renderOrders();
   });
 
-  els.resetBtn.addEventListener('click', ()=>{ reset(); });
-  function reset(){ state.running=false; state.paused=false; state.mode='work'; state.ring.progress=0; closeBreak(true); showToast('リセットしました'); updateUI(); }
-
-  // ---- break modal + flow
-  function openBreak(seconds){
-    state.paused=true; state.running=true; // running but paused drawing ring
-    // set an endAt for break to show remaining in stat
-    const t=now(); state.startAt=t; state.endAt=t+seconds*1000; state.breakRemaining=seconds; els.breakCountdown.textContent=state.breakRemaining; els.endBreak.disabled=true; els.breakModal.style.display='flex';
-    if(state.breakTimer) clearInterval(state.breakTimer);
-    state.breakTimer=setInterval(()=>{
-      state.breakRemaining--; els.breakCountdown.textContent=state.breakRemaining; if(state.breakRemaining<=0){ clearInterval(state.breakTimer); els.endBreak.disabled=false; beep(988,0.18); beep(1319,0.18); notify('休憩完了','お疲れさまです。作業に戻りましょう'); }
-    },1000);
+  function evaluate(stack, order){
+    // exact match bottom->top
+    const want = order.parts;
+    const got = stack.map(p=>p.id);
+    const ok = (want.length===got.length) && want.every((v,i)=>v===got[i]);
+    if(!ok) return {ok:false};
+    // check doneness for every patty
+    let cookPenalty=0; stack.forEach(p=>{ if(p.id==='patty'){ if(p.doneness==='burnt') cookPenalty+=20; else if(p.doneness==='well') cookPenalty+=8; else if(p.doneness==='raw') cookPenalty+=15; }});
+    return {ok:true, cookPenalty};
   }
 
-  function closeBreak(skip=false){
-    if(state.breakTimer) { clearInterval(state.breakTimer); state.breakTimer=null; }
-    els.breakModal.style.display='none';
-    if(!skip){ state.breaks++; state.streak++; save(); showToast('+1 ブレイク達成！'); }
-    else { state.streak=0; save(); showToast('スキップしました'); }
-    // back to work phase
-    state.mode='work'; state.paused=false; const mins= +els.focusMin.value || 20; const t=now(); state.startAt=t; state.endAt=t+mins*60*1000; if(els.autoLoop.value==='off'){ state.running=false; }
+  // --- Game loop & timer
+  function startGame(){
+    if(state.running) return; state.running=true; state.startAt=performance.now(); state.endAt=state.startAt+GAME_TIME; state.score=0; state.combo=0; state.correct=0; state.attempts=0; resetPlate(); state.orders=[]; fillOrders();
+    if(state.timer) cancelAnimationFrame(state.timer); loop(); showToast('ゲーム開始！');
   }
+  function resetGame(){ state.running=false; state.orders=[]; ordersEl.innerHTML=''; resetPlate(); initGrill(); updateStats(true); showToast('リセットしました'); }
+  function loop(){
+    const left = state.endAt - performance.now();
+    stat.time.textContent = mmss(left);
+    paintGrill(); renderOrders();
+    // expire orders
+    state.orders = state.orders.filter(o=>{ if(performance.now()>o.expires){ showToast('⏰ 注文を逃しました -5'); state.score=Math.max(0,state.score-5); state.combo=0; return false; } return true; });
+    fillOrders(); updateStats();
+    if(left<=0){ endGame(); return; }
+    state.timer = requestAnimationFrame(loop);
+  }
+  function endGame(){ state.running=false; cancelAnimationFrame(state.timer); showToast(`終了！ スコア:${state.score} 正確さ:${accuracy()}%`); }
 
-  els.endBreak.addEventListener('click', ()=>{ closeBreak(false); });
-  els.skipBreak.addEventListener('click', ()=>{ closeBreak(true); });
+  function accuracy(){ if(state.attempts===0) return 0; return Math.round((state.correct/state.attempts)*100); }
+  function updateStats(clear){ if(clear){ stat.score.textContent='0'; stat.combo.textContent='0'; stat.acc.textContent='—'; stat.time.textContent='3:00'; return; } stat.score.textContent=state.score; stat.combo.textContent=state.combo; stat.acc.textContent= state.attempts? `${accuracy()}%` : '—'; }
 
-  // ---- sound toggle
-  els.soundBtn.addEventListener('click', ()=>{ state.sound=!state.sound; els.soundBtn.textContent = state.sound? '🔊 サウンド: オン' : '🔇 サウンド: オフ'; });
+  // UI events
+  startBtn.addEventListener('click', startGame);
+  resetBtn.addEventListener('click', resetGame);
 
-  // ---- controls
-  els.startBtn.addEventListener('click', ()=>{ if(!state.running){ state.mode='work'; } start(); });
-
-  // ---- keyboard shortcuts
-  window.addEventListener('keydown', (e)=>{
-    if(e.key===' '){ e.preventDefault(); if(!state.running){ start(); } else { els.pauseBtn.click(); } }
-    if(e.key==='r'){ reset(); }
-  });
-
-  // ---- bootstrap
-  function init(){ state.running=false; state.paused=false; state.mode='work'; state.ring.progress=0; updateUI(); scheduleTick(); loop(); }
-  init();
-
-  // resize handler
-  window.addEventListener('resize', ()=>{ /* canvas scales via CSS; bitmap size fixed */ });
+  // Bootstrap
+  initBins(); initGrill(); renderPlate(); updateStats(true);
 })();
 </script>
 </body>

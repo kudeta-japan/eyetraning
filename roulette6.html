@@ -3,44 +3,83 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Cheese Wonderland | 6-Slice Roulette</title>
+<title>Cheese Wonderland | 6-Slice Roulette HyperFX</title>
 <style>
   :root{
-    --bg:#0e0f1a; --panel:#15182b; --ink:#f6f7ff; --muted:#a9b1d6;
-    --brand:#ffd54d; --accent:#ff6d6d;
+    --bg:#0a0b14; --panel:#12152a; --ink:#f6f7ff; --muted:#a8b1d9;
+    --gold1:#ffe08a; --gold2:#f7b733; --accent:#ff5a76; --ring:#1a1f3b;
   }
   *{box-sizing:border-box}
-  html,body{height:100%;margin:0;background:radial-gradient(1000px 700px at 70% -10%, rgba(255,255,255,.06), transparent 60%), var(--bg); color:var(--ink); font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,"Noto Sans JP",Arial}
-  header{position:sticky;top:0;z-index:10;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg, rgba(255,255,255,.04), transparent)}
-  .tag{background:var(--brand); color:#111; padding:4px 8px; border-radius:999px; font-weight:900; font-size:12px; margin-right:8px}
-  h1{display:inline; font-size:clamp(18px,3.2vw,28px); margin:0}
-  main{display:grid; grid-template-columns:1.2fr .8fr; gap:16px; padding:16px}
-  @media (max-width:980px){ main{grid-template-columns:1fr} }
-  .panel{background:radial-gradient(700px 300px at 100% 0, rgba(255,255,255,.05), transparent 40%), var(--panel); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:14px; position:relative; overflow:hidden}
-  .controls{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:8px 0 12px}
-  .group{display:flex; gap:8px; align-items:center; background:#0c1030; border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:8px 10px}
-  label{font-size:12px; color:var(--muted)}
-  input[type="number"]{background:#0a0e24;color:var(--ink);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:8px 10px;font-size:14px;width:90px;text-align:center}
-  button{appearance:none;border:none;border-radius:12px;background:linear-gradient(180deg,#ffe08a,#f7b733);color:#151515;font-weight:900;letter-spacing:.02em;padding:10px 14px;cursor:pointer;box-shadow:0 8px 24px rgba(255,208,90,.25), inset 0 1px 0 rgba(255,255,255,.5)}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,"Noto Sans JP",Arial}
+  header{position:sticky;top:0;z-index:50;display:flex;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(255,255,255,.035),transparent)}
+  .tag{background:var(--gold1);color:#111;padding:4px 8px;border-radius:999px;font-weight:900;font-size:12px}
+  h1{margin:0;font-size:clamp(18px,3.2vw,28px)}
+  main{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;padding:16px}
+  @media (max-width:980px){main{grid-template-columns:1fr}}
+  .panel{background:radial-gradient(700px 300px at 100% 0, rgba(255,255,255,.05), transparent 40%), var(--panel);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px;position:relative;overflow:hidden}
+
+  /* 背景：カーテン＋ピエロ影のパララックス */
+  .bg{
+    position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;
+    background:
+      radial-gradient(1200px 800px at 80% -10%, rgba(255,255,255,.08), transparent 60%),
+      repeating-linear-gradient(90deg,#170f1f 0 26px,#0c0914 26px 52px);
+    filter:contrast(1.05) saturate(1.1);
+  }
+  .clown{
+    position:absolute;inset:-10% -10% -10% -10%;opacity:.13;mix-blend-mode:soft-light;
+    background:
+      radial-gradient(40% 25% at 50% 12%, rgba(255,255,255,.12), transparent 70%),
+      url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200"><g fill="%23ffffff" opacity="0.12"><circle cx="600" cy="420" r="90"/><rect x="520" y="480" width="160" height="200" rx="28"/><polygon points="600,720 520,860 680,860"/></g></svg>') center/40% no-repeat;
+    transform:translateZ(0);
+  }
+
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0 12px}
+  .group{display:flex;gap:8px;align-items:center;background:#0b1030;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:8px 10px}
+  label{font-size:12px;color:var(--muted)}
+  input[type="number"]{background:#0a0e24;color:var(--ink);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:8px 10px;font-size:14px;width:90px;text-align:center}
+  button{appearance:none;border:none;border-radius:12px;background:linear-gradient(180deg,var(--gold1),var(--gold2));color:#151515;font-weight:900;letter-spacing:.02em;padding:10px 14px;cursor:pointer;box-shadow:0 8px 24px rgba(255,208,90,.25), inset 0 1px 0 rgba(255,255,255,.5)}
   button.ghost{background:#222848;color:var(--ink);border:1px solid rgba(255,255,255,.12);box-shadow:none}
-  .mini{font-size:12px; color:var(--muted)}
-  .stage{display:grid; grid-template-columns:minmax(280px,640px) 1fr; gap:18px; align-items:center}
-  @media (max-width:980px){ .stage{grid-template-columns:1fr} }
-  .wheel-wrap{position:relative; aspect-ratio:1/1; width:100%; display:grid; place-items:center; isolation:isolate}
-  .pointer{position:absolute; top:-4px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:18px solid transparent; border-right:18px solid transparent; border-bottom:28px solid var(--accent); filter:drop-shadow(0 6px 12px rgba(255,109,109,.55)); z-index:5}
-  .wheel{position:relative; width:92%; aspect-ratio:1/1; border-radius:50%; transform:rotate(0deg); transition:transform 5.2s cubic-bezier(.15,.9,.05,1)}
-  .wheel img{width:100%; height:auto; display:block; border-radius:50%}
-  .spot{position:absolute; inset:0; background:radial-gradient(180px 140px at 50% 6%, rgba(255,255,255,.18), rgba(255,255,255,0) 60%); mix-blend-mode:screen; pointer-events:none; z-index:3}
-  .orders table{width:100%; border-collapse:collapse}
-  th,td{padding:8px; border-bottom:1px solid rgba(255,255,255,.08); font-size:14px}
-  .badge{font-size:11px; color:#111; background:var(--brand); padding:2px 6px; border-radius:999px; font-weight:800}
-  .toast{position:fixed; left:50%; top:14px; transform:translateX(-50%) translateY(-16px); background:#111533; color:var(--ink); border:1px solid rgba(255,255,255,.14); padding:10px 14px; border-radius:14px; font-weight:800; opacity:0; transition:.25s; z-index:100}
-  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  .mini{font-size:12px;color:var(--muted)}
+
+  .stage{display:grid;grid-template-columns:minmax(300px,700px) 1fr;gap:18px;align-items:center}
+  @media (max-width:980px){.stage{grid-template-columns:1fr}}
+
+  /* ルーレット舞台 */
+  .wheel-wrap{position:relative;aspect-ratio:1/1;width:100%;display:grid;place-items:center;isolation:isolate}
+  .pointer{position:absolute;top:-2px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:18px solid transparent;border-right:18px solid transparent;border-bottom:28px solid var(--accent);filter:drop-shadow(0 6px 12px rgba(255,90,118,.6));z-index:6}
+  .rim{position:absolute;inset:5%;border-radius:50%;box-shadow:inset 0 0 0 10px rgba(0,0,0,.45), inset 0 0 60px rgba(0,0,0,.5)}
+  .neon{position:absolute;inset:3%;border-radius:50%;pointer-events:none;mix-blend-mode:screen;background:radial-gradient(40% 40% at 50% 50%, rgba(255,235,150,.22), rgba(255,235,150,0) 65%)}
+  .sweep{position:absolute;inset:0;border-radius:50%;background:
+    conic-gradient(from 0deg, rgba(255,240,180,.0), rgba(255,240,180,.6) 6%, rgba(255,240,180,0) 14%),
+    radial-gradient(60% 60% at 50% 50%, rgba(255,255,255,.05), rgba(255,255,255,0) 70%);
+    animation:sweep 2.4s linear infinite;mix-blend-mode:screen;opacity:.8;pointer-events:none}
+  @keyframes sweep{to{transform:rotate(360deg)}}
+
+  .wheel{position:relative;width:92%;aspect-ratio:1/1;border-radius:50%;transform:rotate(0deg);transition:transform 5.6s cubic-bezier(.15,.9,.05,1)}
+  .wheel img{width:100%;height:auto;display:block;border-radius:50%}
+
+  /* モーションブラー風ゴースト（回転時のみ表示） */
+  .ghost{position:absolute;inset:0;filter:blur(2px) brightness(1.15) saturate(1.08);opacity:0;pointer-events:none;transition:opacity .2s}
+  .spinning .ghost{opacity:.45;mix-blend-mode:screen}
+
+  /* スポットライト＆ビネット */
+  .spot{position:absolute;inset:0;background:radial-gradient(220px 160px at 50% 8%, rgba(255,255,255,.20), rgba(255,255,255,0) 60%);mix-blend-mode:screen;pointer-events:none;z-index:5}
+  .vignette{position:absolute;inset:-2%;pointer-events:none;border-radius:16px;box-shadow:inset 0 0 120px rgba(0,0,0,.6)}
+
+  .orders table{width:100%;border-collapse:collapse}
+  th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,.08);font-size:14px}
+  .badge{font-size:11px;color:#111;background:var(--gold1);padding:2px 6px;border-radius:999px;font-weight:800}
+
+  .toast{position:fixed;left:50%;top:14px;transform:translateX(-50%) translateY(-16px);background:#111533;color:var(--ink);border:1px solid rgba(255,255,255,.14);padding:10px 14px;border-radius:14px;font-weight:800;opacity:0;transition:.25s;z-index:200}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  canvas.fx{position:absolute;inset:0;pointer-events:none;z-index:7}
 </style>
 </head>
 <body>
+<div class="bg" id="bg"><div class="clown" id="clown"></div></div>
 <header>
-  <span class="tag">Cheese Wonderland</span><h1>6-Slice Roulette</h1>
+  <span class="tag">Cheese Wonderland</span><h1>6-Slice Roulette — HyperFX</h1>
 </header>
 
 <main>
@@ -64,12 +103,19 @@
     </div>
 
     <div class="stage">
-      <div class="wheel-wrap">
+      <div class="wheel-wrap" id="wrap">
         <div class="pointer"></div>
+        <div class="rim"></div>
+        <div class="neon"></div>
+        <div class="sweep"></div>
+
         <div class="wheel" id="wheel">
-          <!-- 画像は同じフォルダ or assets/ に置く -->
           <img id="wheelImg" src="roulette_ui_6_sections.png" alt="Roulette">
+          <!-- ゴースト重ね：回転中の残像 -->
+          <img class="ghost" src="roulette_ui_6_sections.png" alt="">
         </div>
+
+        <canvas class="fx" id="fx"></canvas>
         <div class="spot"></div>
       </div>
 
@@ -78,6 +124,7 @@
         <div id="weights"></div>
       </div>
     </div>
+    <div class="vignette"></div>
   </section>
 
   <section class="panel orders">
@@ -92,81 +139,53 @@
 <div class="toast" id="toast">設定しました</div>
 
 <script>
-/*
-  6枠の並びは「画像生成時の配置」に合わせています（時計回り）:
-  0: えびフリッター, 1: ローストポーク, 2: フライドチキン,
-  3: バゲット,       4: 野菜盛り,       5: 牛コロカツ
-  ※ 画像は0度=右方向基準で配置しているため、ポインタ(上)とのオフセットを補正しています。
-*/
+/* ====== データ ====== */
 const ITEMS = [
-  { name:"えびフリッター", emoji:"🍤", weight:12 }, // 0
+  { name:"えびフリッター", emoji:"🍤", weight:12 }, // idx 0
   { name:"ローストポーク", emoji:"🍖", weight:12 }, // 1
   { name:"フライドチキン", emoji:"🍗", weight:13 }, // 2
   { name:"バゲット",       emoji:"🥖", weight:15 }, // 3
   { name:"野菜盛り",       emoji:"🥦", weight:13 }, // 4
   { name:"牛コロカツ",     emoji:"🥩", weight:13 }, // 5
 ];
-const N = ITEMS.length;               // 6
-const ARC = 360 / N;                  // 60°
-let spinsLeft = 0, spinning = false, history = [], rotation = 0;
+const N = ITEMS.length, ARC = 360/N;
 
+/* ====== 要素 ====== */
 const wheel = document.getElementById("wheel");
 const img   = document.getElementById("wheelImg");
+const ghost = document.querySelector(".ghost");
 const weightsEl = document.getElementById("weights");
 const toast = document.getElementById("toast");
+const fx = document.getElementById("fx");
+const wrap = document.getElementById("wrap");
+const bg = document.getElementById("bg");
+const clown = document.getElementById("clown");
 
+let spinsLeft = 0, spinning = false, history = [], rotation = 0;
+
+/* ====== ユーティリティ ====== */
 function showToast(msg){ toast.textContent=msg; toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"), 1400); }
 function totalWeight(){ return ITEMS.reduce((s,i)=>s+Number(i.weight||0),0); }
 function pct(w){ const t=totalWeight(); return t? (w/t*100) : 0; }
+function weightedPick(){ const t=totalWeight()||1; let r=Math.random()*t; for(let i=0;i<N;i++){ r-=Number(ITEMS[i].weight||0); if(r<=0) return i } return N-1; }
 
+/* ====== UI ====== */
 function buildWeights(){
   weightsEl.innerHTML = "";
-  const t = totalWeight();
-  ITEMS.forEach((it, idx)=>{
+  ITEMS.forEach((it)=>{
     const row = document.createElement("div");
-    row.style.display="grid"; row.style.gridTemplateColumns="1fr auto"; row.style.gap="8px";
-    row.style.alignItems="center"; row.style.padding="8px"; row.style.border="1px solid rgba(255,255,255,.08)";
-    row.style.borderRadius="12px"; row.style.background="#0b1030"; row.style.marginBottom="8px";
-    const left = document.createElement("div");
-    left.innerHTML = `<span class="badge">枠</span> ${it.emoji} ${it.name}（≈ ${(pct(it.weight)).toFixed(1)}%）`;
-    const right = document.createElement("div"); right.style.display="flex"; right.style.gap="8px"; right.style.alignItems="center";
-    const rng = document.createElement("input"); rng.type="range"; rng.min=0; rng.max=40; rng.value=it.weight; rng.addEventListener("input",()=>{ num.value=rng.value; it.weight=Number(rng.value); refreshOrders(); buildWeights(); });
-    const num = document.createElement("input"); num.type="number"; num.min=0; num.max=200; num.value=it.weight; num.style.width="70px"; num.addEventListener("input",()=>{ rng.value=num.value; it.weight=Number(num.value||0); refreshOrders(); });
+    row.style.cssText = "display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px;margin-bottom:8px;background:#0b1030;border:1px solid rgba(255,255,255,.08);border-radius:12px";
+    const left = document.createElement("div"); left.innerHTML = `<span class="badge">枠</span> ${it.emoji} ${it.name}（≈ ${pct(it.weight).toFixed(1)}%）`;
+    const right = document.createElement("div"); right.style.cssText="display:flex;gap:8px;align-items:center";
+    const rng = document.createElement("input"); rng.type="range"; rng.min=0; rng.max=40; rng.value=it.weight;
+    const num = document.createElement("input"); num.type="number"; num.min=0; num.max=200; num.value=it.weight; num.style.width="70px";
+    const sync = ()=>{ it.weight=Number(num.value||0); rng.value=String(it.weight); refreshOrders(); };
+    rng.addEventListener("input",()=>{ num.value=rng.value; sync(); });
+    num.addEventListener("input",sync);
     right.appendChild(rng); right.appendChild(num);
     row.appendChild(left); row.appendChild(right);
     weightsEl.appendChild(row);
   });
-}
-
-function weightedPick(){
-  const t = totalWeight() || 1;
-  let r = Math.random() * t;
-  for(let i=0;i<N;i++){ r -= Number(ITEMS[i].weight||0); if(r<=0) return i; }
-  return N-1;
-}
-
-function spin(){
-  if(spinning || spinsLeft<=0) return;
-  spinning = true; document.getElementById("spin").disabled = true;
-
-  const idx = weightedPick();
-  // 画像は 0deg=右基準に対して slice center = idx*ARC + ARC/2。
-  // ポインタは画面上部(=右から90deg)なので、中心を上(90deg)に合わせる補正 -90deg。
-  const center = idx*ARC + ARC/2;              // 例: idx=0 => 30deg（右=0基準）
-  const offset = center - 90;                   // 上(90deg)へ合わせる補正
-  const turns = 6 + Math.floor(Math.random()*2);
-  const jitter = (Math.random()*ARC*0.2) - (ARC*0.1);
-  const dest = -(turns*360 + offset + jitter);
-  wheel.style.transition = "transform 5.2s cubic-bezier(.15,.9,.05,1)";
-  wheel.style.transform = `rotate(${dest}deg)`;
-
-  const onEnd = ()=>{
-    wheel.removeEventListener("transitionend", onEnd);
-    rotation = dest;
-    history.push(idx); spinsLeft -= 1; refreshOrders();
-    spinning = false; document.getElementById("spin").disabled = spinsLeft<=0;
-  };
-  wheel.addEventListener("transitionend", onEnd);
 }
 
 function refreshOrders(){
@@ -181,7 +200,113 @@ function refreshOrders(){
   document.getElementById("spinsLeft").textContent = spinsLeft;
 }
 
-// controls
+/* ====== 回転とFX ====== */
+function spin(){
+  if(spinning || spinsLeft<=0) return;
+  spinning = true; document.getElementById("spin").disabled = true;
+
+  const idx = weightedPick();
+  // 画像は右=0deg基準、ポインタは上=90deg。slice center: idx*ARC + ARC/2 -> 上へ合わせる-90
+  const center = idx*ARC + ARC/2;
+  const offset = center - 90;
+  const turns = 6 + Math.floor(Math.random()*2);
+  const jitter = (Math.random()*ARC*0.2) - (ARC*0.1);
+  const dest = -(turns*360 + offset + jitter);
+
+  // ゴーストON、背景パララックス強化
+  wheel.classList.add("spinning");
+  ghost.style.transform = "rotate(-30deg)";
+  bg.animate([{transform:"translate3d(0,0,0)"},{transform:"translate3d(-12px,-10px,0)"}],{duration:300,fill:"forwards"});
+
+  // ティッキングSE開始
+  tickSoundStart();
+
+  wheel.style.transition = "transform 5.6s cubic-bezier(.15,.9,.05,1)";
+  wheel.style.transform = `rotate(${dest}deg)`;
+
+  const onEnd = ()=>{
+    wheel.removeEventListener("transitionend", onEnd);
+    rotation = dest;
+    wheel.classList.remove("spinning");
+    tickSoundStop();
+    burstParticles(); // 勝利パーティクル
+    history.push(idx); spinsLeft -= 1; refreshOrders();
+    spinning = false; document.getElementById("spin").disabled = spinsLeft<=0;
+  };
+  wheel.addEventListener("transitionend", onEnd);
+}
+
+/* ====== パーティクル（Canvas） ====== */
+const ctx = fx.getContext("2d");
+function resizeFX(){
+  const r = wrap.getBoundingClientRect();
+  fx.width = Math.max(1,Math.floor(r.width*devicePixelRatio));
+  fx.height= Math.max(1,Math.floor(r.height*devicePixelRatio));
+}
+addEventListener("resize", resizeFX); new ResizeObserver(resizeFX).observe(wrap); resizeFX();
+
+let particles = [];
+function burstParticles(){
+  const cx = fx.width/2, cy = fx.height/2;
+  for(let i=0;i<160;i++){
+    const a = Math.random()*Math.PI*2;
+    const sp = 3 + Math.random()*5;
+    particles.push({
+      x:cx,y:cy, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp,
+      life: 60 + Math.random()*40,
+      color: `hsl(${Math.floor(10+Math.random()*60)}, 90%, ${60+Math.random()*20}%)`,
+      size: 2 + Math.random()*3
+    });
+  }
+}
+function stepFX(){
+  ctx.clearRect(0,0,fx.width,fx.height);
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.x += p.vx; p.y += p.vy; p.vy += 0.08; p.life--;
+    ctx.globalCompositeOperation = "lighter";
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
+    if(p.life<=0) particles.splice(i,1);
+  }
+  requestAnimationFrame(stepFX);
+}
+stepFX();
+
+/* ====== WebAudioでティッキングSEを合成 ====== */
+let audioCtx, tickTimer;
+function tick(){
+  if(!audioCtx) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = "square";
+  o.frequency.value = 1250 + Math.random()*250;
+  g.gain.value = 0.0001;
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start();
+  const now = audioCtx.currentTime;
+  g.gain.exponentialRampToValueAtTime(0.15, now + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+  o.stop(now + 0.09);
+}
+function tickSoundStart(){
+  audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+  let interval = 80; // 回転序盤
+  clearInterval(tickTimer);
+  tickTimer = setInterval(tick, interval);
+  // 減速に合わせて間隔を伸ばす
+  let t=0;
+  const id = setInterval(()=>{
+    t+=1;
+    interval = Math.min(220, 80 + t*4);
+    clearInterval(tickTimer);
+    tickTimer = setInterval(tick, interval);
+    if(interval>=220) clearInterval(id);
+  }, 260);
+}
+function tickSoundStop(){ clearInterval(tickTimer); }
+
+/* ====== Controls ====== */
 document.getElementById("apply").addEventListener("click", ()=>{
   const p = Math.max(1, Math.floor(Number(document.getElementById("people").value)||0));
   spinsLeft = p*2; refreshOrders(); showToast(`人数 ${p}人 / 合計 ${spinsLeft}回`);
@@ -193,10 +318,29 @@ document.getElementById("exportCSV").addEventListener("click", ()=>{
   const counts = new Map(); history.forEach(i=>counts.set(i,(counts.get(i)||0)+1));
   let csv = "メニュー,数量\n"; ITEMS.forEach((s,i)=>{ const q = counts.get(i)||0; if(q>0) csv += `${s.name},${q}\n`; });
   const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"}); const url = URL.createObjectURL(blob);
-  const a = document.createElement("a"); a.href=url; a.download="orders_6slice.csv"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 500);
+  const a = document.createElement("a"); a.href=url; a.download="orders_6slice_hyperfx.csv"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 500);
 });
+
 document.addEventListener("keydown", e=>{ if(e.key.toLowerCase()==="f"){ const de=document.documentElement; if(!document.fullscreenElement){ de.requestFullscreen?.(); } else { document.exitFullscreen?.(); } } });
 
+/* ====== パララックス（マウス/傾き） ====== */
+function parallax(x, y){
+  const k = 10;
+  bg.style.transform = `translate3d(${x/k}px, ${y/k}px, 0)`;
+  clown.style.transform = `translate3d(${-x/k}px, ${-y/k}px, 0)`;
+}
+window.addEventListener("mousemove",(e)=>{
+  const r = wrap.getBoundingClientRect();
+  const x = (e.clientX - (r.left + r.width/2)) / (r.width/2) * 20;
+  const y = (e.clientY - (r.top + r.height/2)) / (r.height/2) * 20;
+  parallax(x,y);
+});
+window.addEventListener("deviceorientation", (ev)=>{
+  if(ev.gamma==null || ev.beta==null) return;
+  parallax(ev.gamma, ev.beta);
+});
+
+/* ====== 初期化 ====== */
 function init(){ buildWeights(); refreshOrders(); }
 init();
 </script>

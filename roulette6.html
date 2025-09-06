@@ -6,7 +6,8 @@
 <title>Cheese Wonderland — 3D Roulette (Three.js)</title>
 <style>
   :root{ --bg:#0a0b14; --ink:#f6f7ff; --muted:#a8b1d9; --gold:#ffe08a; --accent:#ff5a76; }
-  *{box-sizing:border-box} html,body{height:100%;margin:0;background:radial-gradient(1200px 800px at 80% -10%, rgba(255,255,255,.06), transparent 60%), var(--bg); color:var(--ink); font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,"Noto Sans JP"}
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:radial-gradient(1200px 800px at 80% -10%, rgba(255,255,255,.06), transparent 60%), var(--bg); color:var(--ink); font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,"Noto Sans JP"}
   header{position:sticky;top:0;z-index:50;display:flex;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(255,255,255,.035),transparent)}
   .tag{background:var(--gold);color:#111;padding:4px 8px;border-radius:999px;font-weight:900;font-size:12px}
   h1{margin:0;font-size:clamp(18px,3.2vw,28px)}
@@ -19,7 +20,7 @@
   .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0 12px}
   .group{display:flex;gap:8px;align-items:center;background:#0b1030;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:8px 10px}
   label{font-size:12px;color:var(--muted)}
-  input[type="number"],input[type="file"]{background:#0a0e24;color:var(--ink);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:8px 10px;font-size:14px}
+  input[type="number"],input[type="file"]{background:#0a0e24;color:#f6f7ff;border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:8px 10px;font-size:14px}
   button{appearance:none;border:none;border-radius:12px;background:linear-gradient(180deg,#ffe08a,#f7b733);color:#151515;font-weight:900;letter-spacing:.02em;padding:10px 14px;cursor:pointer;box-shadow:0 8px 24px rgba(255,208,90,.25), inset 0 1px 0 rgba(255,255,255,.5)}
   button.ghost{background:#222848;color:#f6f7ff;border:1px solid rgba(255,255,255,.12);box-shadow:none}
   .mini{font-size:12px;color:var(--muted)}
@@ -51,7 +52,7 @@
       </div>
       <div class="group">
         <input type="file" id="texFile" accept="image/*">
-        <span class="mini">盤面PNG差し替え</span>
+        <span class="mini">盤面画像を差し替え</span>
       </div>
     </div>
 
@@ -88,12 +89,12 @@ import { AfterimagePass } from "https://unpkg.com/three@0.160.0/examples/jsm/pos
 
 /* ====== データ（6等分・バスク無し） ====== */
 const ITEMS = [
-  { name:"えびフリッター", emoji:"🍤", weight:12 }, // idx 0
-  { name:"ローストポーク", emoji:"🍖", weight:12 }, // 1
-  { name:"フライドチキン", emoji:"🍗", weight:13 }, // 2
-  { name:"バゲット",       emoji:"🥖", weight:15 }, // 3
-  { name:"野菜盛り",       emoji:"🥦", weight:13 }, // 4
-  { name:"牛コロカツ",     emoji:"🥩", weight:13 }, // 5
+  { name:"えびフリッター", emoji:"🍤", weight:12 },
+  { name:"ローストポーク", emoji:"🍖", weight:12 },
+  { name:"フライドチキン", emoji:"🍗", weight:13 },
+  { name:"バゲット",       emoji:"🥖", weight:15 },
+  { name:"野菜盛り",       emoji:"🥦", weight:13 },
+  { name:"牛コロカツ",     emoji:"🥩", weight:13 },
 ];
 const N = ITEMS.length, ARC = 360/N;
 
@@ -133,17 +134,29 @@ table.position.y = -0.35; scene.add(table);
 /* ルーレット：上面テクスチャ（Circle）＋縁（Torus） */
 const wheelGroup = new THREE.Group(); scene.add(wheelGroup);
 const loader = new THREE.TextureLoader();
-let wheelTex = loader.load("roulette_ui_6_sections.png"); // 同フォルダに置く
-wheelTex.anisotropy = 8; wheelTex.encoding = THREE.sRGBEncoding;
-const disc = new THREE.Mesh(new THREE.CircleGeometry(3.2, 256), new THREE.MeshStandardMaterial({ map: wheelTex, metalness:.05, roughness:.55 }));
+
+/* 👇 ここが今回の変更点：既定テクスチャに “roulette_ui_6_sections.jpeg” を使用 */
+let wheelTex = loader.load("roulette_ui_6_sections.jpeg"); // 同フォルダに置く
+wheelTex.anisotropy = 8; wheelTex.colorSpace = THREE.SRGBColorSpace;
+
+const disc = new THREE.Mesh(
+  new THREE.CircleGeometry(3.2, 256),
+  new THREE.MeshStandardMaterial({ map: wheelTex, metalness:.05, roughness:.55 })
+);
 disc.rotation.x = -0.28; // 奥に少し倒す
 wheelGroup.add(disc);
 
-const rim = new THREE.Mesh(new THREE.TorusGeometry(3.22, 0.14, 32, 128), new THREE.MeshStandardMaterial({ color:0xd1a94a, metalness:.85, roughness:.35, envMapIntensity:1.2 }));
+const rim = new THREE.Mesh(
+  new THREE.TorusGeometry(3.22, 0.14, 32, 128),
+  new THREE.MeshStandardMaterial({ color:0xd1a94a, metalness:.85, roughness:.35, envMapIntensity:1.2 })
+);
 rim.rotation.x = -0.28; wheelGroup.add(rim);
 
 /* 中央の赤い器っぽいノブ（立体感） */
-const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.7,0.35,64), new THREE.MeshStandardMaterial({ color:0xb90e2d, metalness:.3, roughness:.45, emissive:0x300000, emissiveIntensity:.25 }));
+const knob = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.5,0.7,0.35,64),
+  new THREE.MeshStandardMaterial({ color:0xb90e2d, metalness:.3, roughness:.45, emissive:0x300000, emissiveIntensity:.25 })
+);
 knob.position.set(0, 0.02, 0); knob.rotation.x = -0.28; wheelGroup.add(knob);
 
 /* ポストプロセス（ブルーム＋残像） */
@@ -166,8 +179,12 @@ new ResizeObserver(onResize).observe(stage); onResize();
 texFile.addEventListener("change", e=>{
   const f = e.target.files[0]; if(!f) return;
   const url = URL.createObjectURL(f);
-  const tex = loader.load(url, ()=>{ disc.material.map = tex; disc.material.needsUpdate = true; showToast("盤面を差し替えました"); });
-  tex.anisotropy = 8; tex.encoding = THREE.sRGBEncoding;
+  const tex = loader.load(url, ()=>{
+    disc.material.map = tex;
+    disc.material.needsUpdate = true;
+    showToast("盤面を差し替えました");
+  });
+  tex.anisotropy = 8; tex.colorSpace = THREE.SRGBColorSpace;
 });
 
 /* ====== UI：確率スライダー ====== */
@@ -214,7 +231,7 @@ function spin(){
   spinning = true; document.getElementById("spin").disabled = true;
 
   const idx = weightedPick();
-  // 画像は 右=0° 基準、slice center = idx*ARC + ARC/2、ポインタは上=90° → オフセット= center - 90
+  // 画像は右=0°基準、スライス中心 = idx*ARC + ARC/2、ポインタは上=90° → center - 90 が目標角
   const center = idx*ARC + ARC/2;
   const jitter = (Math.random()*ARC*0.2) - (ARC*0.1);
   const deltaDeg = -(6*360 + (center - 90) + jitter); // 6回転＋目標
@@ -243,7 +260,7 @@ function spin(){
   requestAnimationFrame(anim);
 }
 
-/* ====== WebAudio：チクタクSE（合成） ====== */
+/* ====== WebAudio：チクタクSE ====== */
 let audioCtx, tickTimer;
 function tick(){
   if(!audioCtx) return;

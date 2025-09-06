@@ -5,69 +5,86 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Cheese Wonderland — Fullscreen Roulette</title>
 <style>
-  :root{ --bg:#05060a; --ink:#f6f7ff; --gold:#ffd76a; --muted:#aab0c5; --accent:#ff5a76; }
-  *{box-sizing:border-box} html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,"Noto Sans JP"}
-  #app{position:fixed;inset:0;display:grid;place-items:center}
-  canvas{display:block;width:100vw;height:100vh}
-  .hud{position:fixed;inset:0;pointer-events:none}
-  .top-left{position:absolute;left:10px;top:10px;background:rgba(0,0,0,.5);padding:6px 10px;border-radius:10px;font-weight:700}
-  .center{position:absolute;left:50%;bottom:8vh;transform:translateX(-50%);display:flex;gap:12px;pointer-events:auto}
-  button{appearance:none;border:none;border-radius:12px;padding:12px 16px;font-weight:900;letter-spacing:.02em;cursor:pointer}
-  .primary{background:linear-gradient(180deg,#ffe08a,#f7b733);color:#111;box-shadow:0 8px 24px rgba(255,208,90,.25)}
-  .ghost{background:#1a1f35;color:#e9ecff;border:1px solid rgba(255,255,255,.15)}
-  .toast{position:fixed;left:50%;top:14px;transform:translateX(-50%) translateY(-16px);background:#0f1330;border:1px solid rgba(255,255,255,.18);padding:10px 14px;border-radius:14px;font-weight:800;opacity:0;transition:.25s;z-index:30}
-  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  .result{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.65);opacity:0;pointer-events:none;transition:.35s}
-  .result.show{opacity:1;pointer-events:auto}
-  .card{background:#0f1431;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:18px 22px;min-width:260px}
-  .card h3{margin:0 0 8px 0}
-  .final-list{display:grid;grid-auto-rows:min-content;gap:6px;margin-top:10px}
-  .intro{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(900px 600px at 50% 40%, rgba(255,255,255,.08), transparent 60%)}
-  .intro img{width:min(70vw,600px);border-radius:16px;box-shadow:0 18px 60px rgba(0,0,0,.45)}
-  .pointer{position:fixed;left:50%;top:8px;transform:translateX(-50%);width:0;height:0;border-left:18px solid transparent;border-right:18px solid transparent;border-bottom:28px solid var(--accent);filter:drop-shadow(0 6px 12px rgba(255,90,118,.6));z-index:5}
-  .ask{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.7)}
-  .ask .card input{width:100%;padding:10px;border-radius:10px;background:#0b1030;color:#fff;border:1px solid rgba(255,255,255,.2)}
+  :root{ --bg:#000; --ink:#f6f7ff; --gold:#ffe08a; --accent:#ff5a76; }
+  *{ box-sizing:border-box }
+  html,body{ height:100%; margin:0; background:#000; color:var(--ink); font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,"Noto Sans JP"; }
+  /* フルスクリーンのステージ */
+  #stage{ position:fixed; inset:0; overflow:hidden; }
+  /* 上部の針 */
+  .pointer{ position:absolute; top:14px; left:50%; transform:translateX(-50%); width:0; height:0;
+    border-left:20px solid transparent; border-right:20px solid transparent; border-bottom:34px solid var(--accent);
+    filter:drop-shadow(0 10px 18px rgba(255,90,118,.6)); z-index:8; pointer-events:none;
+  }
+  /* 残回数 */
+  .hud{
+    position:fixed; left:12px; top:12px; z-index:9; font-weight:900;
+    background:rgba(0,0,0,.55); padding:6px 10px; border-radius:10px; border:1px solid rgba(255,255,255,.12);
+  }
+  /* ボタン */
+  .controls{ position:fixed; left:50%; bottom:30px; transform:translateX(-50%); display:flex; gap:12px; z-index:9 }
+  button{ appearance:none; border:none; border-radius:12px; cursor:pointer; font-weight:900; letter-spacing:.02em;
+    padding:12px 16px; font-size:16px; color:#151515; background:linear-gradient(180deg,var(--gold),#f7b733);
+    box-shadow:0 10px 28px rgba(255,208,90,.28), inset 0 1px 0 rgba(255,255,255,.6);
+  }
+  button.ghost{ color:#f6f7ff; background:#1c213f; border:1px solid rgba(255,255,255,.14); box-shadow:none; }
+  button:disabled{ opacity:.5; cursor:not-allowed }
+  /* トースト */
+  .toast{ position:fixed; left:50%; top:16px; transform:translateX(-50%) translateY(-18px); z-index:99;
+    background:#131532; border:1px solid rgba(255,255,255,.18); color:#fff; padding:10px 14px; border-radius:12px; font-weight:800; opacity:0; transition:.25s;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0) }
+  /* 表情オーバーレイ */
+  .face{ position:fixed; inset:0; display:grid; place-items:center; z-index:10; pointer-events:none; opacity:0; transition:.35s ease; }
+  .face.show{ opacity:1; }
+  .face img{ width:min(68vmin,520px); border-radius:16px; box-shadow:0 22px 70px rgba(0,0,0,.55) }
+  /* 人数モーダル */
+  .modal{ position:fixed; inset:0; display:grid; place-items:center; background:rgba(0,0,0,.5); z-index:9999; }
+  .modal:not(.open){ display:none }
+  .card{ background:#141934; padding:18px 20px; border-radius:14px; width:min(92vw,360px);
+      box-shadow:0 20px 60px rgba(0,0,0,.45); color:#fff; }
+  .card h3{ margin:0 0 8px; font-size:18px }
+  .card input{ width:100%; padding:10px 12px; font-size:16px; border-radius:10px; border:1px solid rgba(255,255,255,.18);
+      background:#0e1230; color:#fff; }
+  .card .row{ display:flex; justify-content:flex-end; gap:10px; margin-top:12px }
+  /* 背景のなだらかなグラデーション */
+  .vignette{ position:absolute; inset:-20%; background:radial-gradient(70% 60% at 50% 38%, #14192e, transparent 60%), #000; }
 </style>
 </head>
 <body>
-<div id="app"></div>
-<div class="hud">
+
+<div id="stage">
+  <div class="vignette"></div>
   <div class="pointer"></div>
-  <div class="top-left">残り <b id="left">--</b> 回</div>
-  <div class="center">
-    <button id="btnSpin" class="primary">回す 🎲</button>
-    <button id="btnReset" class="ghost">リセット ♻️</button>
-  </div>
+  <!-- 2D演出用 -->
+  <canvas id="fx" style="position:absolute; inset:0; z-index:6; pointer-events:none;"></canvas>
 </div>
-<div id="toast" class="toast">メッセージ</div>
 
-<!-- 人数入力 -->
-<div id="ask" class="ask">
-  <div class="card">
+<div class="hud">残り <b id="left">--</b> 回</div>
+<div class="controls">
+  <button id="spinBtn">回す 🎲</button>
+  <button id="resetBtn" class="ghost">リセット ♻️</button>
+  <button id="muteBtn"  class="ghost">🔊</button>
+</div>
+
+<div id="toast" class="toast">設定しました</div>
+
+<!-- 表情 -->
+<div class="face" id="faceLayer"><img id="faceImg" src="face.png" alt=""></div>
+
+<!-- 人数モーダル -->
+<div id="setupModal" class="modal open">
+  <form id="setupForm" class="card">
     <h3>人数を入力</h3>
-    <input id="people" type="number" min="1" step="1" value="2" />
-    <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
-      <button id="ok" class="primary">OK</button>
+    <input id="peopleInput" type="number" min="1" step="1" value="2" />
+    <div class="row">
+      <button id="okBtn" type="submit">OK</button>
     </div>
-  </div>
+  </form>
 </div>
 
-<!-- 最終結果 -->
-<div id="final" class="result">
-  <div class="card">
-    <h3>結果一覧</h3>
-    <div id="list" class="final-list"></div>
-    <div style="text-align:right;margin-top:12px"><button id="closeFinal" class="primary">閉じる</button></div>
-  </div>
-</div>
-
-<!-- 表情オーバーレイ -->
-<div id="intro" class="intro" style="display:none">
-  <img id="faceImg" src="face.png" alt="face" />
-</div>
-
-<!-- three.js (CDN modules) -->
+<!-- ===== Three.js (CDN modules) ===== -->
 <script type="module">
+/* -------------------- Imports -------------------- */
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
 import { EffectComposer } from "https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/EffectComposer.js";
@@ -75,193 +92,274 @@ import { RenderPass } from "https://unpkg.com/three@0.160.0/examples/jsm/postpro
 import { UnrealBloomPass } from "https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { AfterimagePass } from "https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/AfterimagePass.js";
 
-/* ========= 設定 ========= */
-// 盤面PNGの「スライス0中心」が画像のどこにあるか（度）
-// 通常は「右=0°」想定。もしズレるならここを±で微調整。
-const SLICE0_AT_DEG = 0;
-// 針は画面上（上=90°）
-const POINTER_DEG = 90;
-// スライス数（画像は6分割）
+/* -------------------- Data -------------------- */
+/** 盤面は画像の扇形順序に合わせて並べてください（右→反時計回り） */
 const ITEMS = [
-  { name:"野菜盛り",       img:"🥦" },
-  { name:"牛コロカツ",     img:"🥩" },
-  { name:"えびフリッター", img:"🍤" },
-  { name:"ローストポーク", img:"🍖" },
-  { name:"フライドチキン", img:"🍗" },
-  { name:"バゲット",       img:"🥖" },
+  { name:"野菜盛り"   , emoji:"🥦" },
+  { name:"牛コロカツ" , emoji:"🥩" },
+  { name:"バゲット"   , emoji:"🥖" },
+  { name:"フライドチキン", emoji:"🍗" },
+  { name:"ローストポーク", emoji:"🍖" },
+  { name:"えびフリッター", emoji:"🍤" },
 ];
-const N = ITEMS.length;
-const ARC = 360/N;
-const ALIGN = SLICE0_AT_DEG - POINTER_DEG; // 基準差
+const N = ITEMS.length, ARC = 360/N;
 
-// 表情画像とSE
-const FACES = ["face.png","suprised.png","happy.png","laugh.png","funny.png"];
-const POP_SOUNDS = [
-  new Audio("https://cdn.jsdelivr.net/gh/jun-sheep/snd@main/pop1.mp3"),
-  new Audio("https://cdn.jsdelivr.net/gh/jun-sheep/snd@main/pop2.mp3"),
-];
-const BGM = new Audio("https://cdn.jsdelivr.net/gh/jun-sheep/snd@main/fun_bgm.mp3");
-BGM.loop = true; BGM.volume = 0.25;
+/* -------------------- DOM -------------------- */
+const stage = document.getElementById('stage');
+const leftEl = document.getElementById('left');
+const toast = document.getElementById('toast');
+const spinBtn = document.getElementById('spinBtn');
+const resetBtn = document.getElementById('resetBtn');
+const muteBtn  = document.getElementById('muteBtn');
+const faceLayer = document.getElementById('faceLayer');
+const faceImg = document.getElementById('faceImg');
 
-/* ========= DOM ========= */
-const app = document.getElementById("app");
-const btnSpin = document.getElementById("btnSpin");
-const btnReset = document.getElementById("btnReset");
-const leftEl = document.getElementById("left");
-const toast = document.getElementById("toast");
-const ask = document.getElementById("ask");
-const peopleInput = document.getElementById("people");
-const okBtn = document.getElementById("ok");
-const finalDlg = document.getElementById("final");
-const finalList = document.getElementById("list");
-const closeFinal = document.getElementById("closeFinal");
-const intro = document.getElementById("intro");
-const faceImg = document.getElementById("faceImg");
+const setupModal  = document.getElementById('setupModal');
+const setupForm   = document.getElementById('setupForm');
+const peopleInput = document.getElementById('peopleInput');
 
-/* ========= Three.js 基本 ========= */
+const fx = document.getElementById('fx');
+const ctx2d = fx.getContext('2d');
+
+/* -------------------- State -------------------- */
+let spinsLeft = 0, spinning = false, results = [];
+let currentAngle = 0;                 // wheelGroup.rotation.z を追跡
+let audioCtx, muted = false, tickTimer;
+const faces = ["face.png","happy.png","suprised.png","funny.png","laugh.png"];
+
+/* -------------------- Three.js scene -------------------- */
 const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
-app.appendChild(renderer.domElement);
+stage.appendChild(renderer.domElement);
 
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(35, innerWidth/innerHeight, 0.1, 100);
-camera.position.set(0, 3.6, 7);
-scene.add(camera);
+const scene  = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(32, innerWidth/innerHeight, 0.1, 100);
+camera.position.set(0, 4.4, 7.6);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enablePan=false; controls.enableDamping=true; controls.minPolarAngle=0.8; controls.maxPolarAngle=1.2; controls.minDistance=5.5; controls.maxDistance=8.5;
+controls.enableDamping = true; controls.enablePan = false; controls.minPolarAngle = 0.9; controls.maxPolarAngle = 1.1;
 
-scene.add(new THREE.AmbientLight(0xffffff, .6));
-const spot = new THREE.SpotLight(0xfff2cc, 1.8, 30, Math.PI/5, .5, 1.2);
-spot.position.set(2.4, 6.5, 3.0); spot.target.position.set(0,0,0); scene.add(spot, spot.target);
+scene.add(new THREE.AmbientLight(0xffffff, .58));
+const spot = new THREE.SpotLight(0xfff2cc, 1.8, 40, Math.PI/5, .45, 1.2);
+spot.position.set(2.4, 7.2, 4.0); spot.target.position.set(0,0,0); scene.add(spot, spot.target);
 
-// テーブル
-const table = new THREE.Mesh(new THREE.CylinderGeometry(6.2,6.2,0.6,64),
-  new THREE.MeshStandardMaterial({ color:0x1c2138, roughness:.95, metalness:.1 }));
+/* 台 */
+const table = new THREE.Mesh(new THREE.CylinderGeometry(7,7,0.6,64), new THREE.MeshStandardMaterial({ color:0x1b2039, metalness:.2, roughness:.95 }));
 table.position.y = -0.45; scene.add(table);
 
-// ルーレット（円盤）
+/* ルーレット本体 */
 const wheelGroup = new THREE.Group(); scene.add(wheelGroup);
 const loader = new THREE.TextureLoader();
-const wheelTex = loader.load("roulette_ui_6_sections.png", ()=>{ renderer.render(scene,camera); });
-wheelTex.anisotropy=8; wheelTex.encoding = THREE.sRGBEncoding;
 
-const disc = new THREE.Mesh(new THREE.CircleGeometry(4.1, 256),
-  new THREE.MeshStandardMaterial({ map: wheelTex, metalness:.08, roughness:.55 }));
-disc.rotation.x = -0.28;
-wheelGroup.add(disc);
+const wheelTex = loader.load("roulette_ui_6_sections.png");
+wheelTex.anisotropy = 8; wheelTex.encoding = THREE.sRGBEncoding;
 
-// 縁
-const rim = new THREE.Mesh(new THREE.TorusGeometry(4.12, 0.17, 32, 128),
-  new THREE.MeshStandardMaterial({ color:0xd1a94a, metalness:.85, roughness:.35, envMapIntensity:1.2 }));
-rim.rotation.x = -0.28; wheelGroup.add(rim);
+const disc = new THREE.Mesh(
+  new THREE.CircleGeometry(4.6, 256),
+  new THREE.MeshStandardMaterial({ map: wheelTex, metalness:.06, roughness:.5 })
+);
+disc.rotation.x = -0.25; wheelGroup.add(disc);
 
-// ポストプロセス
+const rim = new THREE.Mesh(new THREE.TorusGeometry(4.65, 0.18, 32, 128), new THREE.MeshStandardMaterial({ color:0xd1a94a, metalness:.85, roughness:.35 }));
+rim.rotation.x = -0.25; wheelGroup.add(rim);
+
+const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.9,0.4,64), new THREE.MeshStandardMaterial({ color:0xb90e2d, metalness:.3, roughness:.45, emissive:0x330000, emissiveIntensity:.3 }));
+knob.position.set(0,.02,0); knob.rotation.x = -0.25; wheelGroup.add(knob);
+
+/* ポストプロセス */
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
-const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.5, 0.9, 0.2);
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.6, 0.9, 0.2);
 const afterimage = new AfterimagePass(0.88);
 composer.addPass(bloom); composer.addPass(afterimage);
 
-function resize(){
+/* リサイズ */
+function resizeAll(){
   renderer.setSize(innerWidth, innerHeight);
   composer.setSize(innerWidth, innerHeight);
   camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  const r = stage.getBoundingClientRect();
+  fx.width = Math.max(1, Math.floor(r.width * devicePixelRatio));
+  fx.height = Math.max(1, Math.floor(r.height * devicePixelRatio));
 }
-addEventListener("resize", resize);
+addEventListener('resize', resizeAll); resizeAll();
 
-/* ========= 進行管理 ========= */
-let totalSpins = 0; // ＝ 人数×2
-let spinsLeft = 0;
-let spinning = false;
-let currentAngle = 0; // ラジアン
-let selectedIndex = 0; // 抽選の「唯一の真実」
-const history = []; // 当たり履歴 index
+/* 2D 紙吹雪 */
+let particles = [];
+function burst(){
+  const cx = fx.width/2, cy = fx.height*0.42;
+  for(let i=0;i<210;i++){
+    const a = Math.random()*Math.PI*2, sp = 2 + Math.random()*5;
+    particles.push({ x:cx, y:cy, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:60+Math.random()*50, col:`hsl(${10+Math.random()*60},90%,${60+Math.random()*20}%)`, size:2+Math.random()*3 });
+  }
+}
+function stepFX(){
+  ctx2d.clearRect(0,0,fx.width,fx.height);
+  for(let i=particles.length-1;i>=0;i--){
+    const p = particles[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.08; p.life--;
+    ctx2d.globalCompositeOperation="lighter"; ctx2d.fillStyle=p.col; ctx2d.beginPath(); ctx2d.arc(p.x,p.y,p.size,0,Math.PI*2); ctx2d.fill();
+    if(p.life<=0) particles.splice(i,1);
+  }
+  requestAnimationFrame(stepFX);
+}
+stepFX();
 
-function setLeft(n){ spinsLeft=n; leftEl.textContent = String(n); }
-function showToast(msg){ toast.textContent=msg; toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"), 1200); }
+/* -------------------- Sound -------------------- */
+function ensureAudio(){
+  if(audioCtx || muted) return;
+  audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+}
+function tick(){
+  if(!audioCtx || muted) return;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type="square"; o.frequency.value = 1200 + Math.random()*300;
+  g.gain.value = 0.0001; o.connect(g); g.connect(audioCtx.destination);
+  const now = audioCtx.currentTime;
+  o.start(); g.gain.exponentialRampToValueAtTime(0.18, now + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + 0.08); o.stop(now + 0.09);
+}
+function startTicks(){
+  ensureAudio(); let interval = 80; clearInterval(tickTimer); tickTimer = setInterval(tick, interval);
+  // 徐々に間隔を広げていく（減速）
+  let t=0; const id = setInterval(()=>{ t+=1; interval = Math.min(240, 80 + t*4); clearInterval(tickTimer); tickTimer = setInterval(tick, interval); if(interval>=240) clearInterval(id); }, 250);
+}
+function stopTicks(){ clearInterval(tickTimer); }
 
-function showFace(ms=1400){
-  faceImg.src = FACES[Math.floor(Math.random()*FACES.length)];
-  POP_SOUNDS[Math.floor(Math.random()*POP_SOUNDS.length)].play().catch(()=>{});
-  intro.style.display = "grid";
-  setTimeout(()=>{ intro.style.display="none"; }, ms);
+function playBGM(){
+  // シンプルな陽気ループ（合成）— 外部ファイル不要
+  ensureAudio(); if(muted) return;
+  const tempo = 120, beat = 60/tempo;
+  const notes = [0,4,7,12,7,4,0,4]; // Cメジャー
+  let t0 = audioCtx.currentTime + .2;
+  for(let i=0;i<64;i++){
+    const n = notes[i%notes.length];
+    const f = 261.63 * Math.pow(2, n/12);
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain(); o.type="triangle"; o.frequency.value=f;
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.12, t0+.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0+beat*.9);
+    o.connect(g); g.connect(audioCtx.destination); o.start(t0); o.stop(t0+beat);
+    t0 += beat;
+  }
+}
+function faceSFX(){
+  ensureAudio(); if(muted) return;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type="sawtooth"; o.frequency.setValueAtTime(300, audioCtx.currentTime);
+  o.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime+.2);
+  g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.18, audioCtx.currentTime+.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+.4);
+  o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+.42);
 }
 
-function showFinal(){
-  finalList.innerHTML = "";
-  history.forEach(i=>{
-    const div = document.createElement("div");
-    div.textContent = `${ITEMS[i].img} ${ITEMS[i].name}`;
-    finalList.appendChild(div);
-  });
-  finalDlg.classList.add("show");
+/* -------------------- Logic -------------------- */
+function toastShow(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), 1300); }
+function updateLeft(){ leftEl.textContent = String(spinsLeft); }
+
+/** ランダムで等確率 */
+function pickIndex(){ return Math.floor(Math.random()*N); }
+
+/** 表情表示（1.8秒） */
+function showFace(){
+  faceImg.src = faces[Math.floor(Math.random()*faces.length)];
+  faceLayer.classList.add('show'); faceSFX();
+  setTimeout(()=>faceLayer.classList.remove('show'), 1800);
 }
 
-closeFinal.addEventListener("click", ()=> finalDlg.classList.remove("show"));
-
-/* ========= スピン（画像を回す） ========= */
-// 重要：selectedIndex を先に決め、それを**表示に使う**（停止角から再計算しない）
+/** インデックスに合わせて回す（画像を回転） */
 function spin(){
   if(spinning || spinsLeft<=0) return;
-  BGM.play().catch(()=>{});
-  spinning = true; btnSpin.disabled = true;
+  ensureAudio(); playBGM();
+  spinBtn.disabled = true; spinning = true;
 
-  selectedIndex = Math.floor(Math.random()*N);
+  const idx = pickIndex();              // 当選インデックス
+  const centerDeg = idx*ARC + ARC/2;    // セクター中心（右0°基準）
+  const jitter = (Math.random()*ARC*0.25) - (ARC*0.125);  // 少しブレ
+  const targetDegAbs = 90 - (centerDeg + jitter);         // 針は上=90°
+  const baseTarget = THREE.MathUtils.degToRad(targetDegAbs);
 
-  const centerDeg = selectedIndex*ARC + ARC/2;
-  const jitter = (Math.random()-0.5) * (ARC * 0.35); // 35%幅で揺らす（隣に行かない程度）
-  const targetDeg = 6*360 + (centerDeg + ALIGN + jitter);
+  const twoPI = Math.PI*2;
+  const normalizePos = a => (a%twoPI + twoPI) % twoPI;
+  // 現在角から目標角までの正の差分
+  const deltaToTarget = normalizePos(baseTarget - currentAngle);
+  // 6回転＋差分で終点へ
+  const end = currentAngle + twoPI*6 + deltaToTarget;
 
-  const start = currentAngle;                      // rad
-  const end = start - THREE.MathUtils.degToRad(targetDeg); // 時計回りに回すのでマイナス
-  const dur = 5600;
-  const t0 = performance.now();
+  // 演出
+  startTicks(); showFace();
 
-  function easeOutCubic(t){ return 1 - Math.pow(1-t, 3); }
+  const dur = 5600; const t0 = performance.now();
+  const ease = t => 1 - Math.pow(1-t, 3);
 
-  function anim(now){
+  function step(now){
     const t = Math.min(1, (now - t0)/dur);
-    const k = easeOutCubic(t);
-    const ang = start + (end - start)*k;
+    const k = ease(t);
+    const ang = currentAngle + (end - currentAngle)*k;
     wheelGroup.rotation.z = ang;
     composer.render();
-    if(t<1){ requestAnimationFrame(anim); }
+    if(t<1){ requestAnimationFrame(step); }
     else{
-      currentAngle = end;
-      history.push(selectedIndex);
-      setLeft(spinsLeft-1);
-      // 一致する当たり（selectedIndexそのもの）
-      const got = ITEMS[selectedIndex];
-      showToast(`当たり！ ${got.img} ${got.name}`);
-      showFace(1600);
+      stopTicks();
+      currentAngle = normalizePos(end);
+      spinsLeft -= 1; results.push(idx);
+      updateLeft(); spinBtn.disabled = spinsLeft<=0;
+      splashResult(idx);
+      burst();
       spinning = false;
-      btnSpin.disabled = spinsLeft<=0;
-      if(spinsLeft<=0){ setTimeout(showFinal, 800); }
     }
   }
-  requestAnimationFrame(anim);
+  requestAnimationFrame(step);
 }
 
-/* ========= UI ========= */
-btnSpin.addEventListener("click", spin);
-btnReset.addEventListener("click", ()=>{
-  history.length = 0;
-  setLeft(0);
-  showToast("リセットしました");
+/** 一瞬だけ中央に結果を表示 */
+function splashResult(idx){
+  toastShow(`当たり！ ${ITEMS[idx].emoji} ${ITEMS[idx].name}`);
+  if(spinsLeft===0){
+    setTimeout(()=>finalList(), 900);
+  }
+}
+
+/** 最終結果を一覧表示 */
+function finalList(){
+  const tally = new Map();
+  results.forEach(i => tally.set(i, (tally.get(i)||0)+1));
+  const lines = [...tally.entries()]
+    .sort((a,b)=>b[1]-a[1])
+    .map(([i,c]) => `${ITEMS[i].emoji} ${ITEMS[i].name} × ${c}`)
+    .join('\n');
+  alert(lines ? `🎉 結果\n\n${lines}` : '結果はありません');
+}
+
+/* -------------------- Render loop -------------------- */
+renderer.setAnimationLoop(()=>{ controls.update(); composer.render(); });
+
+/* -------------------- UI wiring -------------------- */
+spinBtn.addEventListener('click', spin);
+resetBtn.addEventListener('click', ()=>{
+  results.length = 0; spinsLeft = 0; updateLeft();
+  currentAngle = 0; wheelGroup.rotation.z = 0;
+  setupModal.classList.add('open'); spinBtn.disabled = false;
 });
-okBtn.addEventListener("click", ()=>{
-  const p = Math.max(1, Math.floor(Number(peopleInput.value)||0));
-  totalSpins = p * 2;
-  setLeft(totalSpins);
-  ask.style.display="none";
-  showFace(1200);
-  showToast(`${p}人 / 合計 ${totalSpins} 回`);
+muteBtn.addEventListener('click', ()=>{
+  muted = !muted; muteBtn.textContent = muted ? '🔇' : '🔊';
+  if(audioCtx && muted) audioCtx.suspend?.(); else audioCtx?.resume?.();
 });
 
-/* ========= ループ ========= */
-renderer.setAnimationLoop(()=>{ controls.update(); composer.render(); });
+/* 人数モーダル */
+setupForm.addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const n = Math.max(1, Math.floor(+peopleInput.value||1));
+  spinsLeft = n*2; updateLeft(); results.length = 0;
+  setupModal.classList.remove('open');
+  toastShow(`人数 ${n}人 / 合計 ${spinsLeft}回`);
+});
+document.getElementById('okBtn').addEventListener('click', ()=> setupForm.requestSubmit());
+document.addEventListener('keydown', e=>{ if(setupModal.classList.contains('open') && e.key==='Enter') setupForm.requestSubmit(); });
+
+/* 初期表示 */
+updateLeft();
 </script>
 </body>
 </html>

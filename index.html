@@ -5,85 +5,99 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Cheese Wonderland — Fullscreen Roulette</title>
 <style>
-  html,body { height:100%; margin:0; background:#0b0f1a; overflow:hidden; font-family:ui-sans-serif, -apple-system, Segoe UI, Roboto, "Noto Sans JP", sans-serif; color:#fff; }
-  #stage { position:fixed; inset:0; }
-  /* HUD */
-  #hud { position:fixed; left:16px; top:12px; z-index:20; display:flex; gap:12px; align-items:center; }
-  #left { font-weight:800; opacity:.9; background:rgba(20,24,40,.6); padding:8px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.08); }
-  #buttons { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); display:flex; gap:16px; z-index:20; }
-  button { padding:14px 22px; font-size:18px; font-weight:900; border:none; border-radius:14px; cursor:pointer; background:linear-gradient(180deg,#ffe08a,#f7b733); color:#141414; box-shadow:0 10px 28px rgba(0,0,0,.4); }
-  button.ghost { background:#1c2342; color:#e9ecff; border:1px solid rgba(255,255,255,.14); box-shadow:none; }
-  button:disabled { opacity:.5; cursor:not-allowed; }
-  /* トースト */
-  #toast { position:fixed; left:50%; top:16px; transform:translateX(-50%) translateY(-16px); background:#111533; border:1px solid rgba(255,255,255,.18); color:#fff; padding:10px 14px; border-radius:12px; font-weight:800; opacity:0; transition:.25s; z-index:30; }
-  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-  /* 開始モーダル */
-  #start { position:fixed; inset:0; display:grid; place-items:center; background:rgba(5,8,16,.9); z-index:40; }
-  #start .card { background:linear-gradient(180deg,#161c33,#0f1330); border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:20px; width:min(90vw,480px); box-shadow:0 24px 60px rgba(0,0,0,.6); }
-  #start h2 { margin:0 0 10px; font-size:22px; }
-  #start .row { display:flex; gap:10px; align-items:center; }
-  #start input[type="number"] { flex:1; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,.15); background:#0c1126; color:#fff; font-size:18px; }
-  #start .actions { display:flex; gap:10px; margin-top:14px; justify-content:flex-end; }
-  /* 結果(顔)オーバーレイ */
-  #faceOverlay { position:fixed; inset:0; display:none; place-items:center; background:radial-gradient(600px 400px at 50% 40%, rgba(255,255,255,.06), transparent 60%); z-index:35; pointer-events:none; }
-  #faceOverlay img { max-width:60vw; max-height:60vh; border-radius:16px; box-shadow:0 18px 60px rgba(0,0,0,.55); animation:pop .45s ease both; }
-  @keyframes pop { 0%{ transform:scale(.86); opacity:0 } 100%{ transform:scale(1); opacity:1 } }
+  html,body{height:100%;margin:0;background:#04070f;color:#fff;font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,"Noto Sans JP";overflow:hidden}
+  #stage{position:fixed;inset:0}
+
+  /* 上部：残り回数 */
+  #leftBadge{position:fixed;left:10px;top:10px;z-index:20;background:rgba(20,24,40,.65);
+    border:1px solid rgba(255,255,255,.08);padding:8px 12px;border-radius:10px;font-weight:800}
+
+  /* 下部：ボタン */
+  #controls{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:14px;z-index:20}
+  button{appearance:none;border:none;border-radius:14px;padding:14px 22px;font-size:18px;font-weight:900;cursor:pointer;
+    background:linear-gradient(180deg,#ffe08a,#f7b733);color:#141414;box-shadow:0 10px 28px rgba(0,0,0,.4)}
+  button.ghost{background:#1c2342;color:#e9ecff;border:1px solid rgba(255,255,255,.14);box-shadow:none}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  #mute{width:46px;padding:12px 0}
+
+  /* 上部中央ポインタ */
+  #pointer{position:fixed;top:8px;left:50%;transform:translateX(-50%);width:0;height:0;z-index:15;
+    border-left:18px solid transparent;border-right:18px solid transparent;border-bottom:28px solid #ff5a76;
+    filter:drop-shadow(0 6px 12px rgba(255,90,118,.6))}
+
+  /* トースト（当たり表示） */
+  #toast{position:fixed;left:50%;top:16px;transform:translateX(-50%) translateY(-16px);background:#111533;
+    border:1px solid rgba(255,255,255,.18);padding:10px 14px;border-radius:12px;font-weight:800;opacity:0;
+    transition:.25s;z-index:30}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* 人数入力モーダル */
+  #start{position:fixed;inset:0;display:grid;place-items:center;background:rgba(5,8,16,.9);z-index:40}
+  #start .card{background:linear-gradient(180deg,#161c33,#0f1330);border:1px solid rgba(255,255,255,.1);border-radius:16px;
+    padding:20px;width:min(92vw,480px);box-shadow:0 24px 60px rgba(0,0,0,.6)}
+  #start .row{display:flex;gap:10px;align-items:center}
+  #start input[type=number]{flex:1;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.15);
+    background:#0c1126;color:#fff;font-size:18px}
+
+  /* 顔オーバーレイ（当たり時） */
+  #faceOverlay{position:fixed;inset:0;display:none;place-items:center;background:radial-gradient(600px 400px at 50% 40%,rgba(255,255,255,.06),transparent 60%);z-index:35;pointer-events:none}
+  #faceOverlay img{max-width:60vw;max-height:60vh;border-radius:16px;box-shadow:0 18px 60px rgba(0,0,0,.55);animation:pop .45s ease both}
+  @keyframes pop{0%{transform:scale(.86);opacity:0}100%{transform:scale(1);opacity:1}}
+
   /* 最終サマリー */
-  #summary { position:fixed; inset:0; display:none; background:rgba(0,0,0,.92); z-index:50; color:#fff; }
-  #summary .wrap { max-width:980px; margin:60px auto; padding:0 16px; }
-  #summary h2 { margin:0 0 12px; }
-  #summary table { width:100%; border-collapse:collapse; background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.08); border-radius:12px; overflow:hidden; }
-  #summary th, #summary td { padding:10px; border-bottom:1px solid rgba(255,255,255,.08); }
-  #summary th { text-align:left; color:#aeb8ff; }
-  #summary tr:last-child td { border-bottom:none; }
+  #summary{position:fixed;inset:0;display:none;background:rgba(0,0,0,.92);z-index:50;color:#fff}
+  #summary .wrap{max-width:980px;margin:60px auto;padding:0 16px}
+  #summary table{width:100%;border-collapse:collapse;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden}
+  #summary th,#summary td{padding:10px;border-bottom:1px solid rgba(255,255,255,.08)}
+  #summary th{text-align:left;color:#aeb8ff}
+  #summary tr:last-child td{border-bottom:none}
 </style>
 </head>
 <body>
 <div id="stage"></div>
 
-<div id="hud">
-  <div id="left">残り <b id="leftNum">--</b> 回</div>
-</div>
+<div id="pointer"></div>
+<div id="leftBadge">残り <b id="leftNum">--</b> 回</div>
 
-<div id="buttons">
+<div id="controls">
   <button id="spin">回す 🎡</button>
+  <button id="mute" class="ghost" title="ミュート切替">🔈</button>
   <button id="reset" class="ghost">リセット 🔄</button>
 </div>
 
 <div id="toast">当たり！</div>
 
-<!-- 開始（人数入力） -->
+<!-- 人数入力 -->
 <div id="start">
   <div class="card">
-    <h2>人数を入力してください</h2>
+    <h2 style="margin:0 0 10px">人数を入力してください</h2>
     <div class="row">
       <input type="number" id="people" min="1" step="1" value="2">
       <button id="startBtn">開始</button>
     </div>
-    <div class="actions">
-      <span style="opacity:.7">※ 1人2回プレイ</span>
-    </div>
+    <div style="opacity:.7;margin-top:10px">※ 1人2回プレイ</div>
   </div>
 </div>
 
 <!-- 顔オーバーレイ -->
-<div id="faceOverlay"><img id="faceImg" src="" alt=""></div>
+<div id="faceOverlay"><img id="faceImg" alt=""></div>
 
 <!-- 最終サマリー -->
 <div id="summary">
   <div class="wrap">
     <h2>結果まとめ</h2>
     <div id="list"></div>
-    <div style="margin-top:14px;display:flex;gap:10px;">
+    <div style="margin-top:14px;display:flex;gap:10px">
       <button id="again">もう一度</button>
       <button id="closeSummary" class="ghost">閉じる</button>
     </div>
   </div>
 </div>
 
+<!-- three.js：非module版で確実動作 -->
 <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
 <script>
-/* ========= データ ========= */
+/* ====== データ ====== */
 const ITEMS = [
   { name:"えびフリッター", emoji:"🍤" },
   { name:"ローストポーク", emoji:"🍖" },
@@ -95,194 +109,181 @@ const ITEMS = [
 const FACES = ["face.png","suprised.png","happy.png","laugh.png","funny.png"];
 const N = ITEMS.length, ARC = 360/N;
 
-/* ========= 状態 ========= */
+/* ====== 状態 ====== */
 let spinsLeft = 0, spinning = false, currentAngle = 0;
-let history = []; // {index, itemName, face}
+let results = []; // {idx, name, emoji}
+const leftNum = document.getElementById('leftNum');
+const toast = document.getElementById('toast');
+const faceOverlay = document.getElementById('faceOverlay');
+const faceImg = document.getElementById('faceImg');
 
-/* ========= Three.js ========= */
-const stage = document.getElementById("stage");
-const renderer = new THREE.WebGLRenderer({ antialias:true });
+/* ====== Three.js（正投影で画面フィット） ====== */
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false });
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.setSize(innerWidth, innerHeight);
 stage.appendChild(renderer.domElement);
 
+let camera; // Orthographic
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(35, innerWidth/innerHeight, .1, 100);
-camera.position.set(0, 4, 7);
-scene.add(camera);
-
-scene.add(new THREE.AmbientLight(0xffffff, .6));
-const spot = new THREE.SpotLight(0xfff2cc, 1.6, 25, Math.PI/5, .5, 1);
-spot.position.set(3,6,3); spot.target.position.set(0,0,0); scene.add(spot, spot.target);
-
 const wheelGroup = new THREE.Group(); scene.add(wheelGroup);
 
+// ライト（控えめ）
+scene.add(new THREE.AmbientLight(0xffffff, .8));
+
 const loader = new THREE.TextureLoader();
-const wheelTex = loader.load("roulette_ui_6_sections.png");
-const disc = new THREE.Mesh(new THREE.CircleGeometry(3.1, 256), new THREE.MeshStandardMaterial({ map:wheelTex, metalness:.1, roughness:.6 }));
-disc.rotation.x = -0.35; wheelGroup.add(disc);
+const tex = loader.load('roulette_ui_6_sections.png');
+tex.colorSpace = THREE.SRGBColorSpace;
+tex.minFilter = THREE.LinearMipmapLinearFilter;
+tex.magFilter = THREE.LinearFilter;
+tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
 
-const rim = new THREE.Mesh(new THREE.TorusGeometry(3.12, .12, 32, 128), new THREE.MeshStandardMaterial({ color:0xd1a94a, metalness:.85, roughness:.35 }));
-rim.rotation.x = -0.35; wheelGroup.add(rim);
+// 1x1のPlaneを作り、サイズはリサイズでスケール
+const plane = new THREE.Mesh(
+  new THREE.PlaneGeometry(1,1),
+  new THREE.MeshBasicMaterial({ map:tex, transparent:true })
+);
+wheelGroup.add(plane);
 
-/* ========= HUD ========= */
-const leftNum = document.getElementById("leftNum");
-const toast = document.getElementById("toast");
-function setLeft(n){ leftNum.textContent = n; }
-function showToast(msg){ toast.textContent = msg; toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"), 1100); }
+// 画面にピッタリスケール
+function fitToScreen(){
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h);
+  // 正投影カメラをピクセル基準に
+  camera = new THREE.OrthographicCamera(-w/2, w/2, h/2, -h/2, -10, 10);
+  camera.position.set(0,0,5); camera.lookAt(0,0,0);
 
-/* ========= オーディオ ========= */
-let audioCtx, bgmNode, sfxGain;
-function initAudio(){
+  const size = Math.min(w, h) * 0.9; // 90% を占有
+  plane.scale.set(size, size, 1);
+  wheelGroup.position.set(0,0,0);
+}
+addEventListener('resize', fitToScreen); fitToScreen();
+
+/* ====== 描画ループ ====== */
+function render(){ renderer.render(scene, camera); requestAnimationFrame(render); }
+render();
+
+/* ====== ユーティリティ ====== */
+const showToast = (m)=>{ toast.textContent=m; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), 1100); };
+const setLeft = (n)=> leftNum.textContent = n;
+
+/* ====== オーディオ：スピン中だけ気持ちいいループ、当たりで効果音 ====== */
+let audioCtx, master, loopNode, loopTimer, muted=false;
+function ensureAudio(){
   if(audioCtx) return;
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  sfxGain = audioCtx.createGain(); sfxGain.gain.value = 0.35; sfxGain.connect(audioCtx.destination);
-  startBGM();
+  audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  master = audioCtx.createGain(); master.gain.value = .4; master.connect(audioCtx.destination);
 }
-function startBGM(){
-  // 8bit風アルペジオの簡易ループ（約2小節）
-  const tempo = 120;
-  const secPerBeat = 60/tempo;
-  const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
-  osc.type = "square"; g.gain.value = 0.08;
-  osc.connect(g); g.connect(audioCtx.destination);
-  let t = audioCtx.currentTime + .05;
-  const scale = [0,4,7,12,16]; // Cメジャー和音トーン
-  for(let bar=0; bar<8; bar++){
-    for(let i=0;i<8;i++){
-      const n = 220 * Math.pow(2, (scale[(i+bar)%scale.length]+(bar%2?12:0))/12);
-      const on = t + (bar*8+i)*secPerBeat/2;
-      const off= on + 0.16;
-      const o = audioCtx.createOscillator(); const eg=audioCtx.createGain();
-      o.type="square"; o.frequency.value = n;
-      eg.gain.value=0.0001; o.connect(eg); eg.connect(audioCtx.destination);
-      o.start(on); eg.gain.exponentialRampToValueAtTime(0.10, on+0.01);
-      eg.gain.exponentialRampToValueAtTime(0.0001, off);
-      o.stop(off);
-    }
-  }
-  // ドローン的ベース
-  osc.frequency.value = 110;
-  osc.start(); g.gain.setValueAtTime(0.04, audioCtx.currentTime);
-  bgmNode = osc;
+function startSpinLoop(){
+  if(muted) return;
+  ensureAudio();
+  stopSpinLoop();
+  // 軽い8bit風ループ（3音を短く刻む）
+  loopTimer = setInterval(()=>{
+    const freqs = [523.25,659.25,783.99]; // C5,E5,G5
+    freqs.forEach((f,i)=>{
+      const t = audioCtx.currentTime + i*0.08;
+      const o = audioCtx.createOscillator(); o.type='triangle'; o.frequency.value=f;
+      const g = audioCtx.createGain(); g.gain.value=0.0001;
+      o.connect(g).connect(master);
+      o.start(t);
+      g.gain.setValueAtTime(0.0001,t);
+      g.gain.exponentialRampToValueAtTime(0.22,t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+0.15);
+      o.stop(t+0.16);
+    });
+  }, 260);
 }
-function stopBGM(){ bgmNode?.stop?.(); bgmNode = null; }
-function sfxPop(){
-  if(!audioCtx) return;
+function stopSpinLoop(){ if(loopTimer){ clearInterval(loopTimer); loopTimer=null; } }
+function playHitSFX(){
+  if(muted) return;
+  ensureAudio();
   const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-  o.type="triangle"; o.frequency.value = 880; g.gain.value=0.0001;
-  o.connect(g); g.connect(audioCtx.destination);
-  const now = audioCtx.currentTime;
-  o.start(now);
-  o.frequency.exponentialRampToValueAtTime(1320, now + 0.05);
-  g.gain.exponentialRampToValueAtTime(0.28, now + 0.01);
-  g.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
-  o.stop(now + 0.26);
+  o.type='square'; o.frequency.setValueAtTime(880, audioCtx.currentTime);
+  g.gain.value=0.0001; o.connect(g).connect(master); o.start();
+  const t = audioCtx.currentTime;
+  g.gain.exponentialRampToValueAtTime(0.35, t+0.01);
+  o.frequency.exponentialRampToValueAtTime(1760, t+0.1);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+0.25);
+  o.stop(t+0.26);
 }
 
-/* ========= 顔表示 ========= */
-const faceOverlay = document.getElementById("faceOverlay");
-const faceImg = document.getElementById("faceImg");
-function showFace(){
-  const pick = FACES[Math.floor(Math.random()*FACES.length)];
-  faceImg.src = pick;
-  faceOverlay.style.display = "grid";
-  sfxPop();
-  setTimeout(()=>{ faceOverlay.style.display="none"; }, 800);
-  return pick;
-}
-
-/* ========= ルーレット回転 ========= */
-function pickIndex(){ return Math.floor(Math.random()*N); }
+/* ====== スピン ====== */
+function pick(){ return Math.floor(Math.random()*N); }
 
 function spin(){
   if(spinning || spinsLeft<=0) return;
-  initAudio(); // 最初の操作でオーディオ初期化
+  spinning = true; document.getElementById('spin').disabled = true;
+  startSpinLoop();
 
-  spinning = true; document.getElementById("spin").disabled = true;
-
-  const idx = pickIndex();
+  const idx = pick();
+  // セクション中心角度（右=0°想定）→ ポインタは上(90°) なので center-90
   const center = idx*ARC + ARC/2;
   const jitter = (Math.random()*ARC*0.2) - (ARC*0.1);
-  const deltaDeg = -(6*360 + (center - 90) + jitter);
+  const deltaDeg = -(6*360 + (center - 90) + jitter); // 6回転+目標
   const start = currentAngle;
-  const end = currentAngle + THREE.MathUtils.degToRad(deltaDeg);
-  const dur = 5200;
-  const t0 = performance.now();
+  const end = start + THREE.MathUtils.degToRad(deltaDeg);
+  const dur = 5200; const t0 = performance.now();
 
   function easeOutCubic(t){ return 1 - Math.pow(1-t, 3); }
   function anim(now){
-    const t = Math.min(1, (now - t0)/dur);
+    const t = Math.min(1, (now-t0)/dur);
     const k = easeOutCubic(t);
-    const ang = start + (end - start)*k;
-    wheelGroup.rotation.z = ang;
-    if(t<1){ requestAnimationFrame(anim); }
+    wheelGroup.rotation.z = start + (end-start)*k;
+    if(t<1) requestAnimationFrame(anim);
     else{
       currentAngle = end;
-      const item = ITEMS[idx];
-      showToast(`当たり：${item.emoji} ${item.name}`);
-      const face = showFace();
-      history.push({ index: idx, itemName: item.name, emoji: item.emoji, face });
+      stopSpinLoop();
+      // 1秒弱の当たり表示（顔+トースト）
+      const it = ITEMS[idx];
+      results.push({ idx, name: it.name, emoji: it.emoji });
+      showToast(`${it.emoji} ${it.name} ！`);
+      faceImg.src = FACES[Math.floor(Math.random()*FACES.length)];
+      faceOverlay.style.display = 'grid';
+      playHitSFX();
+      setTimeout(()=>{ faceOverlay.style.display='none'; }, 900);
+
       spinsLeft -= 1; setLeft(spinsLeft);
-      spinning = false; document.getElementById("spin").disabled = spinsLeft<=0;
-      if(spinsLeft<=0){ setTimeout(showSummary, 600); }
+      spinning = false; document.getElementById('spin').disabled = (spinsLeft<=0);
+
+      if(spinsLeft<=0){ showSummary(); }
     }
-    renderer.render(scene, camera);
   }
   requestAnimationFrame(anim);
 }
 
-/* ========= サマリー ========= */
-const summary = document.getElementById("summary");
-const list = document.getElementById("list");
+/* ====== サマリー ====== */
 function showSummary(){
-  // 集計
-  const counts = new Map();
-  history.forEach(h=>counts.set(h.itemName,(counts.get(h.itemName)||0)+1));
-  // HTML
-  let html = "";
-  html += "<h3>当たりの順番</h3>";
-  html += '<table><thead><tr><th>#</th><th>メニュー</th></tr></thead><tbody>';
-  history.forEach((h,i)=>{ html += `<tr><td>${i+1}</td><td>${h.emoji} ${h.itemName}</td></tr>`; });
-  html += "</tbody></table>";
-  html += "<h3 style='margin-top:16px;'>集計</h3>";
-  html += '<table><thead><tr><th>メニュー</th><th>数量</th></tr></thead><tbody>';
-  ITEMS.forEach(s=>{
-    html += `<tr><td>${s.emoji} ${s.name}</td><td>${counts.get(s.name)||0}</td></tr>`;
-  });
-  html += "</tbody></table>";
-  list.innerHTML = html;
-  summary.style.display = "block";
+  const map = new Map();
+  results.forEach(r=> map.set(r.name, (map.get(r.name)||0)+1));
+  const rows = [...map.entries()].map(([name,c])=>`<tr><td>${name}</td><td style="text-align:right">${c}</td></tr>`).join('');
+  document.getElementById('list').innerHTML =
+    `<table><thead><tr><th>メニュー</th><th style="text-align:right">数量</th></tr></thead><tbody>${rows||'<tr><td colspan="2">なし</td></tr>'}</tbody></table>`;
+  document.getElementById('summary').style.display='block';
 }
-document.getElementById("closeSummary").onclick = ()=> summary.style.display = "none";
-document.getElementById("again").onclick = ()=>{ summary.style.display="none"; hardReset(); };
 
-/* ========= リセット ========= */
-function hardReset(){
-  history = []; currentAngle = 0; wheelGroup.rotation.z = 0;
-  document.getElementById("spin").disabled = true;
-  setLeft("--");
-  document.getElementById("start").style.display = "grid";
-}
-document.getElementById("reset").onclick = hardReset;
-
-/* ========= 開始（人数入力） ========= */
-document.getElementById("startBtn").onclick = ()=>{
-  const p = Math.max(1, Math.floor(Number(document.getElementById("people").value)||0));
-  spinsLeft = p * 2; setLeft(spinsLeft);
-  document.getElementById("spin").disabled = false;
-  document.getElementById("start").style.display = "none";
-  // ユーザー操作が入ったのでBGM初期化＆開始（必要なら）
-  initAudio();
-};
-
-/* ========= ループ & リサイズ ========= */
-document.getElementById("spin").onclick = spin;
-addEventListener("resize", ()=>{
-  renderer.setSize(innerWidth, innerHeight);
-  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+/* ====== UI 配線 ====== */
+document.getElementById('spin').addEventListener('click', spin);
+document.getElementById('reset').addEventListener('click', ()=>{
+  stopSpinLoop(); results=[]; spinsLeft=0; setLeft('--');
+  document.getElementById('summary').style.display='none';
+  document.getElementById('spin').disabled=false; wheelGroup.rotation.z = currentAngle = 0;
+  document.getElementById('start').style.display='grid';
 });
-renderer.setAnimationLoop(()=>{ renderer.render(scene, camera); });
+document.getElementById('mute').addEventListener('click', ()=>{ muted=!muted; showToast(muted?'ミュート':'サウンドON'); });
+
+document.getElementById('startBtn').addEventListener('click', ()=>{
+  const p = Math.max(1, Math.floor(Number(document.getElementById('people').value)||0));
+  spinsLeft = p*2; setLeft(spinsLeft); results=[]; document.getElementById('start').style.display='none';
+  showToast(`人数 ${p}人 / 合計 ${spinsLeft}回`);
+});
+document.getElementById('again').addEventListener('click', ()=>{
+  document.getElementById('summary').style.display='none';
+  document.getElementById('start').style.display='grid';
+});
+document.getElementById('closeSummary').addEventListener('click', ()=>{
+  document.getElementById('summary').style.display='none';
+});
 </script>
 </body>
 </html>

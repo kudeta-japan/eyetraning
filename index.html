@@ -1,303 +1,140 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Cheese Wonderland — 3D Roulette (Three.js)</title>
-<link rel="icon" href="data:,"><!-- 404防止用の空favicon -->
-
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cheese Wonderland — Fullscreen Roulette</title>
 <style>
-  :root{ --bg:#0a0b14; --ink:#f6f7ff; --muted:#a8b1d9; --gold:#ffe08a; --accent:#ff5a76; }
-  *{box-sizing:border-box}
-  html,body{height:100%;margin:0;background:radial-gradient(1200px 800px at 80% -10%, rgba(255,255,255,.06), transparent 60%), var(--bg); color:var(--ink); font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,"Noto Sans JP"}
-  header{position:sticky;top:0;z-index:50;display:flex;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(255,255,255,.035),transparent)}
-  .tag{background:var(--gold);color:#111;padding:4px 8px;border-radius:999px;font-weight:900;font-size:12px}
-  h1{margin:0;font-size:clamp(18px,3.2vw,28px)}
-  main{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;padding:16px}
-  @media (max-width:980px){main{grid-template-columns:1fr}}
-  .panel{background:radial-gradient(700px 300px at 100% 0, rgba(255,255,255,.05), transparent 40%), #12152a;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px;position:relative;overflow:hidden}
-  .stage{position:relative;aspect-ratio:1/1;min-height:420px;border-radius:12px;overflow:hidden}
-  canvas.fx{position:absolute;inset:0;pointer-events:none;z-index:6}
-  .pointer{position:absolute;left:50%;top:8px;transform:translateX(-50%);width:0;height:0;border-left:18px solid transparent;border-right:18px solid transparent;border-bottom:28px solid var(--accent);filter:drop-shadow(0 6px 12px rgba(255,90,118,.6));z-index:7}
-  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0 12px}
-  .group{display:flex;gap:8px;align-items:center;background:#0b1030;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:8px 10px}
-  label{font-size:12px;color:var(--muted)}
-  input[type="number"]{background:#0a0e24;color:var(--ink);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:8px 10px;font-size:14px}
-  button{appearance:none;border:none;border-radius:12px;background:linear-gradient(180deg,#ffe08a,#f7b733);color:#151515;font-weight:900;letter-spacing:.02em;padding:10px 14px;cursor:pointer;box-shadow:0 8px 24px rgba(255,208,90,.25), inset 0 1px 0 rgba(255,255,255,.5)}
-  button.ghost{background:#222848;color:#f6f7ff;border:1px solid rgba(255,255,255,.12);box-shadow:none}
-  .mini{font-size:12px;color:var(--muted)}
-  .toast{position:fixed;left:50%;top:14px;transform:translateX(-50%) translateY(-16px);background:#111533;color:#f6f7ff;border:1px solid rgba(255,255,255,.14);padding:10px 14px;border-radius:14px;font-weight:800;opacity:0;transition:.25s;z-index:200}
-  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  .intro{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(800px 600px at 50% 40%, rgba(255,255,255,.06), transparent 60%);z-index:8;pointer-events:auto}
-  .intro img{width:min(70%,520px);border-radius:16px;box-shadow:0 18px 60px rgba(0,0,0,.45)}
-  .intro.hide{animation:fadeOut .6s ease forwards}
-  @keyframes fadeOut{to{opacity:0;transform:translateY(-10px);pointer-events:none}}
+  html, body {
+    margin:0; padding:0; height:100%; width:100%;
+    background:#000; overflow:hidden;
+    font-family: ui-sans-serif, sans-serif;
+    color:#fff;
+  }
+  #stage {position:fixed; inset:0;}
+  #ui {
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    display:flex; gap:20px; z-index:20;
+  }
+  button {
+    padding:14px 24px; font-size:18px; font-weight:bold;
+    border:none; border-radius:12px;
+    cursor:pointer; background:linear-gradient(180deg,#ffe08a,#f7b733); color:#111;
+    box-shadow:0 4px 14px rgba(0,0,0,.5);
+  }
+  #result {
+    position:fixed; inset:0;
+    display:none; justify-content:center; align-items:center;
+    background:rgba(0,0,0,.9); z-index:30;
+  }
+  #result img {
+    max-width:80%; max-height:80%; border-radius:16px;
+    box-shadow:0 18px 60px rgba(0,0,0,.7);
+  }
 </style>
 </head>
 <body>
-<header><span class="tag">Cheese Wonderland</span><h1>3D Roulette — Three.js</h1></header>
+<div id="stage"></div>
 
-<main>
-  <section class="panel">
-    <div class="controls">
-      <div class="group">
-        <label for="people">人数</label>
-        <input type="number" id="people" min="1" step="1" value="2">
-        <button id="apply">設定</button>
-        <span class="mini">残り <b id="spinsLeft">--</b> 回</span>
-      </div>
-      <div class="group">
-        <button id="spin">回す</button>
-        <button id="undo" class="ghost">一手戻す</button>
-        <button id="reset" class="ghost">リセット</button>
-        <span class="mini">Fで全画面</span>
-      </div>
-    </div>
+<div id="ui">
+  <button id="spin">回す 🎡</button>
+  <button id="reset">リセット 🔄</button>
+</div>
 
-    <div class="stage" id="stage">
-      <div class="pointer"></div>
-      <canvas class="fx" id="fx"></canvas>
-      <div id="intro" class="intro"><img src="face.png" alt="face"></div>
-    </div>
-  </section>
+<div id="result"><img id="resultImg" src=""></div>
 
-  <section class="panel">
-    <h3>注文リスト</h3>
-    <table style="width:100%;border-collapse:collapse">
-      <thead><tr><th style="text-align:left;padding:8px;border-bottom:1px solid rgba(255,255,255,.08)">メニュー</th><th style="text-align:right;padding:8px;border-bottom:1px solid rgba(255,255,255,.08)">数量</th></tr></thead>
-      <tbody id="orderBody"></tbody>
-    </table>
-  </section>
-</main>
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
 
-<div class="toast" id="toast">設定しました</div>
-
-<!-- ========== Three.js + postprocessing (CDN ESM) ========== -->
-<script type="module">
-import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
-import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
-import { EffectComposer } from "https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/EffectComposer.js";
-import { RenderPass } from "https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/RenderPass.js";
-import { UnrealBloomPass } from "https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/UnrealBloomPass.js";
-import { AfterimagePass } from "https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/AfterimagePass.js";
-
-/* ====== データ（均等6等分） ====== */
-const ITEMS = [
-  { name:"えびフリッター", emoji:"🍤" },
-  { name:"ローストポーク", emoji:"🍖" },
-  { name:"フライドチキン", emoji:"🍗" },
-  { name:"バゲット",       emoji:"🥖" },
-  { name:"野菜盛り",       emoji:"🥦" },
-  { name:"牛コロカツ",     emoji:"🥩" },
-];
-const N = ITEMS.length, ARC = 360/N;
-
-/* ====== DOM ====== */
+<script>
+/* ====== 基本セットアップ ====== */
 const stage = document.getElementById("stage");
-const toast = document.getElementById("toast");
-const orderBody = document.getElementById("orderBody");
-const fx = document.getElementById("fx");
-const intro = document.getElementById("intro");
-let spinsLeft = 0, spinning = false, history = [], currentAngle = 0;
-
-/* ====== Three.js ====== */
-const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.setSize(stage.clientWidth, stage.clientHeight);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth, window.innerHeight);
 stage.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(35, stage.clientWidth/stage.clientHeight, 0.1, 100);
-camera.position.set(0, 3.8, 6.5);
+const camera = new THREE.PerspectiveCamera(35, window.innerWidth/window.innerHeight, 0.1, 100);
+camera.position.set(0,4,7);
 scene.add(camera);
 
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; controls.enablePan = false;
-controls.minDistance = 5; controls.maxDistance = 10;
-controls.minPolarAngle = 0.8; controls.maxPolarAngle = 1.2;
-
-scene.add(new THREE.AmbientLight(0xffffff, .55));
-const spot = new THREE.SpotLight(0xfff2cc, 1.8, 25, Math.PI/5, .5, 1.2);
-spot.position.set(2.4, 6.2, 3.0); spot.target.position.set(0,0,0);
+scene.add(new THREE.AmbientLight(0xffffff,.6));
+const spot = new THREE.SpotLight(0xfff2cc,1.5,25,Math.PI/5,.5,1);
+spot.position.set(3,6,3);
+spot.target.position.set(0,0,0);
 scene.add(spot, spot.target);
 
-const table = new THREE.Mesh(
-  new THREE.CylinderGeometry(5,5,0.5,64),
-  new THREE.MeshStandardMaterial({ color:0x202338, metalness:.2, roughness:.9 })
-);
-table.position.y = -0.35; scene.add(table);
-
-/* ルーレット */
+/* ====== ルーレット盤 ====== */
 const wheelGroup = new THREE.Group(); scene.add(wheelGroup);
-const loader = new THREE.TextureLoader();
-const wheelTex = loader.load("roulette_ui_6_sections.png");
-wheelTex.anisotropy = 8; wheelTex.encoding = THREE.sRGBEncoding;
-
+const texLoader = new THREE.TextureLoader();
+const wheelTex = texLoader.load("roulette_ui_6_sections.png");
 const disc = new THREE.Mesh(
-  new THREE.CircleGeometry(3.2, 256),
-  new THREE.MeshStandardMaterial({ map: wheelTex, metalness:.05, roughness:.55 })
+  new THREE.CircleGeometry(3,256),
+  new THREE.MeshStandardMaterial({map:wheelTex, metalness:.1, roughness:.6})
 );
-disc.rotation.x = -0.28; wheelGroup.add(disc);
+disc.rotation.x = -0.35;
+wheelGroup.add(disc);
 
 const rim = new THREE.Mesh(
-  new THREE.TorusGeometry(3.22, 0.14, 32, 128),
-  new THREE.MeshStandardMaterial({ color:0xd1a94a, metalness:.85, roughness:.35, envMapIntensity:1.2 })
+  new THREE.TorusGeometry(3.05,0.12,32,128),
+  new THREE.MeshStandardMaterial({color:0xd1a94a, metalness:.8, roughness:.4})
 );
-rim.rotation.x = -0.28; wheelGroup.add(rim);
+rim.rotation.x = -0.35;
+wheelGroup.add(rim);
 
-const knob = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.5,0.7,0.35,64),
-  new THREE.MeshStandardMaterial({ color:0xb90e2d, metalness:.3, roughness:.45, emissive:0x300000, emissiveIntensity:.25 })
-);
-knob.position.set(0,0.02,0); knob.rotation.x = -0.28; wheelGroup.add(knob);
+/* ====== 状態管理 ====== */
+let spinning=false, currentAngle=0;
 
-/* ポストプロセス */
-const composer = new EffectComposer(renderer);
-composer.addPass(new RenderPass(scene, camera));
-const bloom = new UnrealBloomPass(new THREE.Vector2(stage.clientWidth, stage.clientHeight), 0.6, 0.9, 0.2);
-const afterimage = new AfterimagePass(0.88);
-composer.addPass(bloom); composer.addPass(afterimage);
-
-/* リサイズ */
-function onResize(){
-  const w = stage.clientWidth, h = stage.clientHeight;
-  renderer.setSize(w, h); composer.setSize(w, h);
-  camera.aspect = w/h; camera.updateProjectionMatrix();
-  resizeFX();
-}
-new ResizeObserver(onResize).observe(stage); onResize();
-
-/* 注文表 */
-function refreshOrders(){
-  orderBody.innerHTML = "";
-  const counts = new Map(); history.forEach(i=>counts.set(i,(counts.get(i)||0)+1));
-  ITEMS.forEach((s,i)=>{
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td style="padding:8px;border-bottom:1px solid rgba(255,255,255,.08)">${s.emoji} ${s.name}</td>
-                    <td style="padding:8px;border-bottom:1px solid rgba(255,255,255,.08);text-align:right">${counts.get(i)||0}</td>`;
-    orderBody.appendChild(tr);
-  });
-  document.getElementById("spinsLeft").textContent = spinsLeft;
-}
-
-/* 抽選（均等） */
-const pickEqual = ()=> Math.floor(Math.random()*N);
-
-/* トースト */
-function showToast(msg){ toast.textContent=msg; toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"), 1400); }
-
-/* 回す */
+/* ====== 回す ====== */
 function spin(){
-  if(spinning || spinsLeft<=0) return;
-  if(!intro.classList.contains("hide")) intro.classList.add("hide");
-  spinning = true; document.getElementById("spin").disabled = true;
+  if(spinning) return;
+  spinning=true;
+  const idx = Math.floor(Math.random()*6); // 6等分
+  const ARC=360/6;
+  const center = idx*ARC+ARC/2;
+  const deltaDeg=-(6*360+(center-90));
+  const start=currentAngle;
+  const end=currentAngle+THREE.MathUtils.degToRad(deltaDeg);
+  const dur=5000;
+  const t0=performance.now();
 
-  const idx = pickEqual();
-  const center = idx*ARC + ARC/2;
-  const jitter = (Math.random()*ARC*0.2) - (ARC*0.1);
-  const deltaDeg = -(6*360 + (center - 90) + jitter);
-  const start = currentAngle;
-  const end = currentAngle + THREE.MathUtils.degToRad(deltaDeg);
-  const dur = 5600;
-  const t0 = performance.now();
-  tickSoundStart();
-
-  const easeOutCubic = t => 1 - Math.pow(1-t, 3);
-  const anim = now => {
-    const t = Math.min(1, (now - t0)/dur);
-    const k = easeOutCubic(t);
-    wheelGroup.rotation.z = start + (end - start)*k;
-    renderer.setAnimationLoop(render);
-    if(t<1){ requestAnimationFrame(anim); }
-    else{
-      currentAngle = end;
-      tickSoundStop();
-      burstParticles();
-      history.push(idx); spinsLeft -= 1; refreshOrders();
-      spinning = false; document.getElementById("spin").disabled = spinsLeft<=0;
-    }
-  };
+  function easeOutCubic(t){ return 1-Math.pow(1-t,3); }
+  function anim(now){
+    const t=Math.min(1,(now-t0)/dur);
+    const ang=start+(end-start)*easeOutCubic(t);
+    wheelGroup.rotation.z=ang;
+    if(t<1){requestAnimationFrame(anim);}
+    else{ currentAngle=end; spinning=false; showResult(); }
+    renderer.render(scene,camera);
+  }
   requestAnimationFrame(anim);
 }
 
-/* SE */
-let audioCtx, tickTimer;
-function tick(){
-  if(!audioCtx) return;
-  const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-  o.type="square"; o.frequency.value = 1200 + Math.random()*300;
-  g.gain.value = 0.0001; o.connect(g); g.connect(audioCtx.destination);
-  o.start();
-  const now = audioCtx.currentTime;
-  g.gain.exponentialRampToValueAtTime(0.14, now + 0.01);
-  g.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
-  o.stop(now + 0.09);
+/* ====== 結果表示 ====== */
+const clownFaces=[
+  "face.png","suprised.png","happy.png","laugh.png","funny.png"
+];
+function showResult(){
+  const pick=clownFaces[Math.floor(Math.random()*clownFaces.length)];
+  document.getElementById("resultImg").src=pick;
+  document.getElementById("result").style.display="flex";
 }
-function tickSoundStart(){
-  audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
-  let interval = 80; clearInterval(tickTimer); tickTimer = setInterval(tick, interval);
-  let t=0; const id = setInterval(()=>{
-    t+=1; interval = Math.min(220, 80 + t*4);
-    clearInterval(tickTimer); tickTimer = setInterval(tick, interval);
-    if(interval>=220) clearInterval(id);
-  }, 260);
-}
-function tickSoundStop(){ clearInterval(tickTimer); }
 
-/* 紙吹雪 */
-const ctx = fx.getContext("2d");
-function resizeFX(){
-  const r = stage.getBoundingClientRect();
-  fx.width = Math.max(1, Math.floor(r.width * devicePixelRatio));
-  fx.height = Math.max(1, Math.floor(r.height * devicePixelRatio));
-}
-let particles = [];
-function burstParticles(){
-  const cx = fx.width/2, cy = fx.height*0.38;
-  for(let i=0;i<180;i++){
-    const a = Math.random()*Math.PI*2, sp = 3 + Math.random()*5;
-    particles.push({ x:cx, y:cy, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:60+Math.random()*40, col:`hsl(${10+Math.random()*60},90%,${60+Math.random()*20}%)`, size:2+Math.random()*3 });
-  }
-}
-function stepFX(){
-  ctx.clearRect(0,0,fx.width,fx.height);
-  for(let i=particles.length-1;i>=0;i--){
-    const p = particles[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.08; p.life--;
-    ctx.globalCompositeOperation="lighter"; ctx.fillStyle=p.col; ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
-    if(p.life<=0) particles.splice(i,1);
-  }
-  requestAnimationFrame(stepFX);
-}
-new ResizeObserver(resizeFX).observe(stage); resizeFX(); stepFX();
+/* ====== リセット ====== */
+document.getElementById("reset").onclick=()=>{
+  document.getElementById("result").style.display="none";
+  currentAngle=0; wheelGroup.rotation.z=0;
+};
 
-/* ループ */
-function render(){ controls.update(); composer.render(); }
-renderer.setAnimationLoop(render);
+/* ====== UI配線 ====== */
+document.getElementById("spin").onclick=spin;
 
-/* UI */
-document.getElementById("apply").addEventListener("click", ()=>{
-  const p = Math.max(1, Math.floor(Number(document.getElementById("people").value)||0));
-  spinsLeft = p*2; refreshOrders(); showToast(`人数 ${p}人 / 合計 ${spinsLeft}回`);
+/* ====== リサイズ ====== */
+window.addEventListener("resize",()=>{
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  camera.aspect=window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
 });
-document.getElementById("spin").addEventListener("click", spin);
-document.getElementById("undo").addEventListener("click", ()=>{
-  if(spinning||history.length===0) return; history.pop(); spinsLeft += 1; refreshOrders();
-});
-document.getElementById("reset").addEventListener("click", ()=>{
-  if(spinning) return; history=[]; spinsLeft=0; refreshOrders();
-});
-document.addEventListener("keydown", e=>{
-  if(e.key.toLowerCase()==="f"){
-    const de=document.documentElement;
-    if(!document.fullscreenElement){ de.requestFullscreen?.(); }
-    else { document.exitFullscreen?.(); }
-  }
-});
-
-/* 初期化 */
-refreshOrders();
-showToast("face.png をクリックするか回すと開始");
-intro.addEventListener("click", ()=> intro.classList.add("hide"));
+renderer.setAnimationLoop(()=>{renderer.render(scene,camera);});
 </script>
 </body>
 </html>

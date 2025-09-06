@@ -6,8 +6,7 @@
 <title>Cheese Wonderland — 3D Roulette (Three.js)</title>
 <style>
   :root{ --bg:#0a0b14; --ink:#f6f7ff; --muted:#a8b1d9; --gold:#ffe08a; --accent:#ff5a76; }
-  *{box-sizing:border-box}
-  html,body{height:100%;margin:0;background:radial-gradient(1200px 800px at 80% -10%, rgba(255,255,255,.06), transparent 60%), var(--bg); color:var(--ink); font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,"Noto Sans JP"}
+  *{box-sizing:border-box} html,body{height:100%;margin:0;background:radial-gradient(1200px 800px at 80% -10%, rgba(255,255,255,.06), transparent 60%), var(--bg); color:var(--ink); font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,"Noto Sans JP"}
   header{position:sticky;top:0;z-index:50;display:flex;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(255,255,255,.035),transparent)}
   .tag{background:var(--gold);color:#111;padding:4px 8px;border-radius:999px;font-weight:900;font-size:12px}
   h1{margin:0;font-size:clamp(18px,3.2vw,28px)}
@@ -24,8 +23,6 @@
   button{appearance:none;border:none;border-radius:12px;background:linear-gradient(180deg,#ffe08a,#f7b733);color:#151515;font-weight:900;letter-spacing:.02em;padding:10px 14px;cursor:pointer;box-shadow:0 8px 24px rgba(255,208,90,.25), inset 0 1px 0 rgba(255,255,255,.5)}
   button.ghost{background:#222848;color:#f6f7ff;border:1px solid rgba(255,255,255,.12);box-shadow:none}
   .mini{font-size:12px;color:var(--muted)}
-  .weights .row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px;margin-bottom:8px;background:#0b1030;border:1px solid rgba(255,255,255,.08);border-radius:12px}
-  .weights input[type="range"]{width:160px}
   .orders table{width:100%;border-collapse:collapse}
   th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,.08);font-size:14px}
   .toast{position:fixed;left:50%;top:14px;transform:translateX(-50%) translateY(-16px);background:#111533;color:#f6f7ff;border:1px solid rgba(255,255,255,.14);padding:10px 14px;border-radius:14px;font-weight:800;opacity:0;transition:.25s;z-index:200}
@@ -41,13 +38,13 @@
       <div class="group">
         <label>人数</label>
         <input type="number" id="people" min="1" step="1" value="2">
-        <button id="apply">設定</button>
+        <button id="apply" type="button">設定</button>
         <span class="mini">残り <b id="spinsLeft">--</b> 回</span>
       </div>
       <div class="group">
-        <button id="spin">回す</button>
-        <button id="undo" class="ghost">一手戻す</button>
-        <button id="reset" class="ghost">リセット</button>
+        <button id="spin" type="button">回す</button>
+        <button id="undo" type="button" class="ghost">一手戻す</button>
+        <button id="reset" type="button" class="ghost">リセット</button>
         <span class="mini">Fで全画面</span>
       </div>
     </div>
@@ -58,15 +55,10 @@
     </div>
   </section>
 
-  <section class="panel">
-    <h3>確率（重み）</h3>
-    <div id="weights" class="weights"></div>
-  </section>
-
   <section class="panel orders">
     <h3>注文リスト</h3>
     <table>
-      <thead><tr><th style="text-align:left;">メニュー</th><th>確率</th><th style="text-align:right;">数量</th></tr></thead>
+      <thead><tr><th style="text-align:left;">メニュー</th><th style="text-align:right;">数量</th></tr></thead>
       <tbody id="orderBody"></tbody>
     </table>
   </section>
@@ -82,22 +74,27 @@ import { RenderPass } from "https://unpkg.com/three@0.160.0/examples/jsm/postpro
 import { UnrealBloomPass } from "https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { AfterimagePass } from "https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/AfterimagePass.js";
 
-/* ====== データ（6等分・バスク無し） ====== */
+/* ====== データ（6等分・均等確率） ====== */
+/* 確率を変える場合は ITEMS の並び or weightedPick() を編集してください。 */
 const ITEMS = [
-  { name:"えびフリッター", emoji:"🍤", weight:12 },
-  { name:"ローストポーク", emoji:"🍖", weight:12 },
-  { name:"フライドチキン", emoji:"🍗", weight:13 },
-  { name:"バゲット",       emoji:"🥖", weight:15 },
-  { name:"野菜盛り",       emoji:"🥦", weight:13 },
-  { name:"牛コロカツ",     emoji:"🥩", weight:13 },
+  { name:"えびフリッター", emoji:"🍤" },
+  { name:"ローストポーク", emoji:"🍖" },
+  { name:"フライドチキン", emoji:"🍗" },
+  { name:"バゲット",       emoji:"🥖" },
+  { name:"野菜盛り",       emoji:"🥦" },
+  { name:"牛コロカツ",     emoji:"🥩" },
 ];
 const N = ITEMS.length, ARC = 360/N;
 
 /* ====== DOM ====== */
 const stage = document.getElementById("stage");
 const toast = document.getElementById("toast");
-const weightsEl = document.getElementById("weights");
+const orderBody = document.getElementById("orderBody");
 const fx = document.getElementById("fx");
+const peopleEl = document.getElementById("people");
+const spinBtn = document.getElementById("spin");
+const applyBtn = document.getElementById("apply");
+
 let spinsLeft = 0, spinning = false, history = [], currentAngle = 0;
 
 /* ====== Three.js 基本セットアップ ====== */
@@ -114,30 +111,31 @@ scene.add(camera);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; controls.enablePan = false; controls.minDistance = 5; controls.maxDistance = 10; controls.minPolarAngle = 0.8; controls.maxPolarAngle = 1.2;
 
-/* 環境光＋スポット */
+/* 光源 */
 scene.add(new THREE.AmbientLight(0xffffff, .55));
 const spot = new THREE.SpotLight(0xfff2cc, 1.8, 25, Math.PI/5, .5, 1.2);
 spot.position.set(2.4, 6.2, 3.0); spot.target.position.set(0,0,0);
 scene.add(spot, spot.target);
 
 /* テーブル */
-const table = new THREE.Mesh(new THREE.CylinderGeometry(5,5,0.5,64), new THREE.MeshStandardMaterial({ color:0x202338, metalness:.2, roughness:.9 }));
+const table = new THREE.Mesh(
+  new THREE.CylinderGeometry(5,5,0.5,64),
+  new THREE.MeshStandardMaterial({ color:0x202338, metalness:.2, roughness:.9 })
+);
 table.position.y = -0.35; scene.add(table);
 
-/* ルーレット本体 */
+/* ====== ルーレット（固定PNGテクスチャ） ====== */
 const wheelGroup = new THREE.Group(); scene.add(wheelGroup);
 const loader = new THREE.TextureLoader();
 
-/* 既定テクスチャを PNG に変更 */
-let wheelTex = loader.load("roulette_ui_6_sections.png");
-wheelTex.anisotropy = 8; wheelTex.colorSpace = THREE.SRGBColorSpace;
+const wheelTex = loader.load("roulette_ui_6_sections.png");
+wheelTex.anisotropy = 8; wheelTex.encoding = THREE.sRGBEncoding;
 
 const disc = new THREE.Mesh(
   new THREE.CircleGeometry(3.2, 256),
   new THREE.MeshStandardMaterial({ map: wheelTex, metalness:.05, roughness:.55 })
 );
-disc.rotation.x = -0.28;
-wheelGroup.add(disc);
+disc.rotation.x = -0.28; wheelGroup.add(disc);
 
 const rim = new THREE.Mesh(
   new THREE.TorusGeometry(3.22, 0.14, 32, 128),
@@ -145,14 +143,41 @@ const rim = new THREE.Mesh(
 );
 rim.rotation.x = -0.28; wheelGroup.add(rim);
 
-/* 中央ノブ */
 const knob = new THREE.Mesh(
   new THREE.CylinderGeometry(0.5,0.7,0.35,64),
   new THREE.MeshStandardMaterial({ color:0xb90e2d, metalness:.3, roughness:.45, emissive:0x300000, emissiveIntensity:.25 })
 );
 knob.position.set(0, 0.02, 0); knob.rotation.x = -0.28; wheelGroup.add(knob);
 
-/* ポストプロセス */
+/* ====== 起動時の顔画像（face.png） ====== */
+const faceMat = new THREE.MeshBasicMaterial({
+  map: loader.load("face.png"),
+  transparent: true,
+  opacity: 0
+});
+faceMat.map.encoding = THREE.sRGBEncoding;
+const faceGeo = new THREE.PlaneGeometry(3.2, 3.2);
+const faceMesh = new THREE.Mesh(faceGeo, faceMat);
+faceMesh.position.set(0, 1.2, 0.01);
+scene.add(faceMesh);
+
+// ふわっと登場
+(function intro(){
+  const t0 = performance.now(), dur=1200;
+  const startS = 0.85, endS = 1.0;
+  function ease(t){ return 1 - Math.pow(1-t,3); }
+  function loop(now){
+    const k = Math.min(1,(now-t0)/dur), e=ease(k);
+    faceMat.opacity = e;
+    const s = startS + (endS-startS)*e;
+    faceMesh.scale.set(s,s,1);
+    faceMesh.position.y = 1.2 + Math.sin(now*0.003)*0.06;
+    if(k<1) requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+
+/* ====== ポストプロセス ====== */
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
 const bloom = new UnrealBloomPass(new THREE.Vector2(stage.clientWidth, stage.clientHeight), 0.6, 0.9, 0.2);
@@ -168,64 +193,54 @@ function onResize(){
 }
 new ResizeObserver(onResize).observe(stage); onResize();
 
-/* 確率UI */
-function pct(w){ const t = ITEMS.reduce((s,i)=>s+Number(i.weight||0),0); return t? (w/t*100) : 0; }
-function buildWeights(){
-  weightsEl.innerHTML = "";
-  ITEMS.forEach(it=>{
-    const row = document.createElement("div"); row.className="row";
-    const left = document.createElement("div"); left.textContent = `${it.emoji} ${it.name}（≈ ${pct(it.weight).toFixed(1)}%）`;
-    const right = document.createElement("div"); right.style.display="flex"; right.style.gap="8px"; right.style.alignItems="center";
-    const rng = document.createElement("input"); rng.type="range"; rng.min=0; rng.max=40; rng.value=it.weight;
-    const num = document.createElement("input"); num.type="number"; num.min=0; num.max=200; num.value=it.weight; num.style.width="70px";
-    const sync=()=>{ it.weight=Number(num.value||0); rng.value=String(it.weight); buildWeights(); refreshOrders(); };
-    rng.addEventListener("input", ()=>{ num.value=rng.value; sync(); }); num.addEventListener("input", sync);
-    right.append(rng,num); row.append(left,right); weightsEl.append(row);
-  });
-}
-
-/* 注文集計 */
-const orderBody = document.getElementById("orderBody");
+/* ====== 注文集計（均等確率なので確率列はなし） ====== */
 function refreshOrders(){
   orderBody.innerHTML = "";
   const counts = new Map(); history.forEach(i=>counts.set(i,(counts.get(i)||0)+1));
-  const tot = ITEMS.reduce((s,i)=>s+Number(i.weight||0),0);
   ITEMS.forEach((s,i)=>{
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${s.emoji} ${s.name}</td><td>≈ ${(tot?(s.weight/tot*100):0).toFixed(1)}%</td><td style="text-align:right;">${counts.get(i)||0}</td>`;
+    tr.innerHTML = `<td>${s.emoji} ${s.name}</td>
+                    <td style="text-align:right;">${counts.get(i)||0}</td>`;
     orderBody.appendChild(tr);
   });
   document.getElementById("spinsLeft").textContent = spinsLeft;
 }
 
-/* 抽選 */
-function weightedPick(){
-  const tot = ITEMS.reduce((s,i)=>s+Number(i.weight||0),0) || 1;
-  let r = Math.random()*tot;
-  for(let i=0;i<N;i++){ r -= Number(ITEMS[i].weight||0); if(r<=0) return i; }
-  return N-1;
-}
-function showToast(msg){ const t = document.getElementById("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"), 1200); }
+/* ====== くじロジック（均等） ====== */
+function weightedPick(){ return Math.floor(Math.random()*N); }
+function showToast(msg){ toast.textContent = msg; toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"), 1200); }
 
-/* 回転 */
+/* ====== 回す（減速イージング＋SE＋紙吹雪） ====== */
 function spin(){
   if(spinning || spinsLeft<=0) return;
-  spinning = true; document.getElementById("spin").disabled = true;
+  spinning = true; spinBtn.disabled = true;
+
+  // 顔をフェードアウト（最初のスピン時のみ）
+  if(faceMat.opacity>0){
+    const t0=performance.now(), dur=500, start=faceMat.opacity;
+    function f(now){
+      const k=Math.min(1,(now-t0)/dur);
+      faceMat.opacity = start*(1-k);
+      faceMesh.position.y += 0.01; // 少し上に消える
+      if(k<1) requestAnimationFrame(f);
+    }
+    requestAnimationFrame(f);
+  }
 
   const idx = weightedPick();
-  const center = idx*ARC + ARC/2;             // スライス中心（右=0°基準）
+  const center = idx*ARC + ARC/2;
   const jitter = (Math.random()*ARC*0.2) - (ARC*0.1);
-  const deltaDeg = -(6*360 + (center - 90) + jitter); // ポインタは上=90°
+  const deltaDeg = -(6*360 + (center - 90) + jitter); // 6回転＋目標
   const start = currentAngle;
   const end = currentAngle + THREE.MathUtils.degToRad(deltaDeg);
   const dur = 5600;
   const t0 = performance.now();
   tickSoundStart();
 
-  const easeOutCubic = t => 1 - Math.pow(1-t, 3);
-  const anim = now => {
+  const ease = t => 1 - Math.pow(1-t, 3);
+  function anim(now){
     const t = Math.min(1, (now - t0)/dur);
-    const k = easeOutCubic(t);
+    const k = ease(t);
     const ang = start + (end - start)*k;
     wheelGroup.rotation.z = ang;
     renderer.setAnimationLoop(render);
@@ -235,13 +250,13 @@ function spin(){
       tickSoundStop();
       burstParticles();
       history.push(idx); spinsLeft -= 1; refreshOrders();
-      spinning = false; document.getElementById("spin").disabled = spinsLeft<=0;
+      spinning = false; spinBtn.disabled = spinsLeft<=0;
     }
-  };
+  }
   requestAnimationFrame(anim);
 }
 
-/* SE */
+/* ====== WebAudio：チクタクSE ====== */
 let audioCtx, tickTimer;
 function tick(){
   if(!audioCtx) return;
@@ -261,7 +276,7 @@ function tickSoundStart(){
 }
 function tickSoundStop(){ clearInterval(tickTimer); }
 
-/* 紙吹雪（2D Canvas） */
+/* ====== 紙吹雪（2D Canvas） ====== */
 const ctx = fx.getContext("2d");
 function resizeFX(){
   const r = stage.getBoundingClientRect();
@@ -287,22 +302,22 @@ function stepFX(){
 }
 new ResizeObserver(resizeFX).observe(stage); resizeFX(); stepFX();
 
-/* 描画ループ */
+/* ====== レンダリングループ ====== */
 function render(){ controls.update(); composer.render(); }
 renderer.setAnimationLoop(render);
 
-/* UI */
-document.getElementById("apply").addEventListener("click", ()=>{
-  const p = Math.max(1, Math.floor(Number(document.getElementById("people").value)||0));
+/* ====== UI配線 ====== */
+applyBtn.addEventListener("click", ()=>{
+  const p = Math.max(1, Math.floor(Number(peopleEl.value)||0));
   spinsLeft = p*2; refreshOrders(); showToast(`人数 ${p}人 / 合計 ${spinsLeft}回`);
 });
-document.getElementById("spin").addEventListener("click", spin);
+spinBtn.addEventListener("click", spin);
 document.getElementById("undo").addEventListener("click", ()=>{ if(spinning||history.length===0) return; history.pop(); spinsLeft += 1; refreshOrders(); });
 document.getElementById("reset").addEventListener("click", ()=>{ if(spinning) return; history=[]; spinsLeft=0; refreshOrders(); });
 document.addEventListener("keydown", e=>{ if(e.key.toLowerCase()==="f"){ const de=document.documentElement; if(!document.fullscreenElement){ de.requestFullscreen?.(); } else { document.exitFullscreen?.(); } } });
 
-function buildAll(){ buildWeights(); refreshOrders(); }
-buildAll();
+function showToast(msg){ toast.textContent=msg; toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"), 1400); }
+refreshOrders();
 </script>
 </body>
 </html>

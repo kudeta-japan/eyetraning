@@ -223,7 +223,6 @@ function refreshOrders(){
 
 /* ====== くじロジック（均等） ====== */
 function weightedPick(){ return Math.floor(Math.random()*N); }
-function showToast(msg){ toast.textContent = msg; toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"), 1200); }
 
 /* ====== 回す（減速イージング＋SE＋紙吹雪） ====== */
 function spin(){

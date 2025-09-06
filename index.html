@@ -4,6 +4,8 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Cheese Wonderland — 3D Roulette (Three.js)</title>
+<link rel="icon" href="data:,"><!-- 404防止用の空favicon -->
+
 <style>
   :root{ --bg:#0a0b14; --ink:#f6f7ff; --muted:#a8b1d9; --gold:#ffe08a; --accent:#ff5a76; }
   *{box-sizing:border-box}
@@ -26,13 +28,10 @@
   .mini{font-size:12px;color:var(--muted)}
   .toast{position:fixed;left:50%;top:14px;transform:translateX(-50%) translateY(-16px);background:#111533;color:#f6f7ff;border:1px solid rgba(255,255,255,.14);padding:10px 14px;border-radius:14px;font-weight:800;opacity:0;transition:.25s;z-index:200}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-  /* 初回フェイス */
   .intro{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(800px 600px at 50% 40%, rgba(255,255,255,.06), transparent 60%);z-index:8;pointer-events:auto}
   .intro img{width:min(70%,520px);border-radius:16px;box-shadow:0 18px 60px rgba(0,0,0,.45)}
   .intro.hide{animation:fadeOut .6s ease forwards}
   @keyframes fadeOut{to{opacity:0;transform:translateY(-10px);pointer-events:none}}
-  th,td{font-size:14px}
 </style>
 </head>
 <body>
@@ -42,7 +41,7 @@
   <section class="panel">
     <div class="controls">
       <div class="group">
-        <label>人数</label>
+        <label for="people">人数</label>
         <input type="number" id="people" min="1" step="1" value="2">
         <button id="apply">設定</button>
         <span class="mini">残り <b id="spinsLeft">--</b> 回</span>
@@ -58,11 +57,7 @@
     <div class="stage" id="stage">
       <div class="pointer"></div>
       <canvas class="fx" id="fx"></canvas>
-
-      <!-- 初回フェイス -->
-      <div id="intro" class="intro">
-        <img src="face.png" alt="face">
-      </div>
+      <div id="intro" class="intro"><img src="face.png" alt="face"></div>
     </div>
   </section>
 
@@ -77,9 +72,8 @@
 
 <div class="toast" id="toast">設定しました</div>
 
-<!-- Three.js + postprocessing (CDN) -->
+<!-- ========== Three.js + postprocessing (CDN ESM) ========== -->
 <script type="module">
-/* ====== ESM imports (CDN) ====== */
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
 import { EffectComposer } from "https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/EffectComposer.js";
@@ -87,7 +81,7 @@ import { RenderPass } from "https://unpkg.com/three@0.160.0/examples/jsm/postpro
 import { UnrealBloomPass } from "https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { AfterimagePass } from "https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/AfterimagePass.js";
 
-/* ====== データ（均等6等分・バスク無し） ====== */
+/* ====== データ（均等6等分） ====== */
 const ITEMS = [
   { name:"えびフリッター", emoji:"🍤" },
   { name:"ローストポーク", emoji:"🍖" },
@@ -104,10 +98,9 @@ const toast = document.getElementById("toast");
 const orderBody = document.getElementById("orderBody");
 const fx = document.getElementById("fx");
 const intro = document.getElementById("intro");
-
 let spinsLeft = 0, spinning = false, history = [], currentAngle = 0;
 
-/* ====== Three.js 基本セットアップ ====== */
+/* ====== Three.js ====== */
 const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(stage.clientWidth, stage.clientHeight);
@@ -119,36 +112,46 @@ camera.position.set(0, 3.8, 6.5);
 scene.add(camera);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; controls.enablePan = false; controls.minDistance = 5; controls.maxDistance = 10; controls.minPolarAngle = 0.8; controls.maxPolarAngle = 1.2;
+controls.enableDamping = true; controls.enablePan = false;
+controls.minDistance = 5; controls.maxDistance = 10;
+controls.minPolarAngle = 0.8; controls.maxPolarAngle = 1.2;
 
-/* 環境光＋スポット */
 scene.add(new THREE.AmbientLight(0xffffff, .55));
 const spot = new THREE.SpotLight(0xfff2cc, 1.8, 25, Math.PI/5, .5, 1.2);
 spot.position.set(2.4, 6.2, 3.0); spot.target.position.set(0,0,0);
 scene.add(spot, spot.target);
 
-/* テーブル */
-const table = new THREE.Mesh(new THREE.CylinderGeometry(5,5,0.5,64), new THREE.MeshStandardMaterial({ color:0x202338, metalness:.2, roughness:.9 }));
+const table = new THREE.Mesh(
+  new THREE.CylinderGeometry(5,5,0.5,64),
+  new THREE.MeshStandardMaterial({ color:0x202338, metalness:.2, roughness:.9 })
+);
 table.position.y = -0.35; scene.add(table);
 
-/* ルーレット：上面テクスチャ（Circle）＋縁（Torus） */
+/* ルーレット */
 const wheelGroup = new THREE.Group(); scene.add(wheelGroup);
 const loader = new THREE.TextureLoader();
-let wheelTex = loader.load("roulette_ui_6_sections.png"); // 同階層のPNG
+const wheelTex = loader.load("roulette_ui_6_sections.png");
 wheelTex.anisotropy = 8; wheelTex.encoding = THREE.sRGBEncoding;
 
-const disc = new THREE.Mesh(new THREE.CircleGeometry(3.2, 256), new THREE.MeshStandardMaterial({ map: wheelTex, metalness:.05, roughness:.55 }));
-disc.rotation.x = -0.28; // 奥に少し倒す
-wheelGroup.add(disc);
+const disc = new THREE.Mesh(
+  new THREE.CircleGeometry(3.2, 256),
+  new THREE.MeshStandardMaterial({ map: wheelTex, metalness:.05, roughness:.55 })
+);
+disc.rotation.x = -0.28; wheelGroup.add(disc);
 
-const rim = new THREE.Mesh(new THREE.TorusGeometry(3.22, 0.14, 32, 128), new THREE.MeshStandardMaterial({ color:0xd1a94a, metalness:.85, roughness:.35, envMapIntensity:1.2 }));
+const rim = new THREE.Mesh(
+  new THREE.TorusGeometry(3.22, 0.14, 32, 128),
+  new THREE.MeshStandardMaterial({ color:0xd1a94a, metalness:.85, roughness:.35, envMapIntensity:1.2 })
+);
 rim.rotation.x = -0.28; wheelGroup.add(rim);
 
-/* 中央ノブ */
-const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.7,0.35,64), new THREE.MeshStandardMaterial({ color:0xb90e2d, metalness:.3, roughness:.45, emissive:0x300000, emissiveIntensity:.25 }));
-knob.position.set(0, 0.02, 0); knob.rotation.x = -0.28; wheelGroup.add(knob);
+const knob = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.5,0.7,0.35,64),
+  new THREE.MeshStandardMaterial({ color:0xb90e2d, metalness:.3, roughness:.45, emissive:0x300000, emissiveIntensity:.25 })
+);
+knob.position.set(0,0.02,0); knob.rotation.x = -0.28; wheelGroup.add(knob);
 
-/* ポストプロセス（ブルーム＋残像） */
+/* ポストプロセス */
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
 const bloom = new UnrealBloomPass(new THREE.Vector2(stage.clientWidth, stage.clientHeight), 0.6, 0.9, 0.2);
@@ -164,7 +167,7 @@ function onResize(){
 }
 new ResizeObserver(onResize).observe(stage); onResize();
 
-/* ====== 注文集計 ====== */
+/* 注文表 */
 function refreshOrders(){
   orderBody.innerHTML = "";
   const counts = new Map(); history.forEach(i=>counts.set(i,(counts.get(i)||0)+1));
@@ -177,40 +180,34 @@ function refreshOrders(){
   document.getElementById("spinsLeft").textContent = spinsLeft;
 }
 
-/* ====== 均等抽選 ====== */
-function pickEqual(){ return Math.floor(Math.random()*N); }
+/* 抽選（均等） */
+const pickEqual = ()=> Math.floor(Math.random()*N);
 
-/* ====== トースト ====== */
-function showToast(msg){
-  toast.textContent = msg;
-  toast.classList.add("show");
-  setTimeout(()=>toast.classList.remove("show"), 1400);
-}
+/* トースト */
+function showToast(msg){ toast.textContent=msg; toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"), 1400); }
 
-/* ====== 回す（減速イージング＋SE＋紙吹雪） ====== */
+/* 回す */
 function spin(){
   if(spinning || spinsLeft<=0) return;
-  if(!intro.classList.contains("hide")) intro.classList.add("hide"); // 初回フェイス消し
-
-  spinning = true;
-  document.getElementById("spin").disabled = true;
+  if(!intro.classList.contains("hide")) intro.classList.add("hide");
+  spinning = true; document.getElementById("spin").disabled = true;
 
   const idx = pickEqual();
-  // 画像は右=0°、扇形中央：idx*ARC + ARC/2、ポインタは上=90° → center - 90 が目標オフセット
   const center = idx*ARC + ARC/2;
-  const jitter = (Math.random()*ARC*0.2) - (ARC*0.1);        // ちょいブレ
-  const deltaDeg = -(6*360 + (center - 90) + jitter);        // 6回転＋目標
+  const jitter = (Math.random()*ARC*0.2) - (ARC*0.1);
+  const deltaDeg = -(6*360 + (center - 90) + jitter);
   const start = currentAngle;
   const end = currentAngle + THREE.MathUtils.degToRad(deltaDeg);
   const dur = 5600;
   const t0 = performance.now();
-
   tickSoundStart();
-  function easeOutCubic(t){ return 1 - Math.pow(1-t, 3); }
-  function anim(now){
+
+  const easeOutCubic = t => 1 - Math.pow(1-t, 3);
+  const anim = now => {
     const t = Math.min(1, (now - t0)/dur);
     const k = easeOutCubic(t);
     wheelGroup.rotation.z = start + (end - start)*k;
+    renderer.setAnimationLoop(render);
     if(t<1){ requestAnimationFrame(anim); }
     else{
       currentAngle = end;
@@ -219,15 +216,15 @@ function spin(){
       history.push(idx); spinsLeft -= 1; refreshOrders();
       spinning = false; document.getElementById("spin").disabled = spinsLeft<=0;
     }
-  }
+  };
   requestAnimationFrame(anim);
 }
 
-/* ====== WebAudio：チクタクSE（合成） ====== */
+/* SE */
 let audioCtx, tickTimer;
 function tick(){
   if(!audioCtx) return;
-  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
   o.type="square"; o.frequency.value = 1200 + Math.random()*300;
   g.gain.value = 0.0001; o.connect(g); g.connect(audioCtx.destination);
   o.start();
@@ -239,14 +236,15 @@ function tick(){
 function tickSoundStart(){
   audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
   let interval = 80; clearInterval(tickTimer); tickTimer = setInterval(tick, interval);
-  let t=0; const id = setInterval(()=>{ t+=1; interval = Math.min(220, 80 + t*4);
+  let t=0; const id = setInterval(()=>{
+    t+=1; interval = Math.min(220, 80 + t*4);
     clearInterval(tickTimer); tickTimer = setInterval(tick, interval);
     if(interval>=220) clearInterval(id);
   }, 260);
 }
 function tickSoundStop(){ clearInterval(tickTimer); }
 
-/* ====== 紙吹雪（2D Canvas） ====== */
+/* 紙吹雪 */
 const ctx = fx.getContext("2d");
 function resizeFX(){
   const r = stage.getBoundingClientRect();
@@ -264,28 +262,30 @@ function burstParticles(){
 function stepFX(){
   ctx.clearRect(0,0,fx.width,fx.height);
   for(let i=particles.length-1;i>=0;i--){
-    const p = particles[i];
-    p.x+=p.vx; p.y+=p.vy; p.vy+=0.08; p.life--;
-    ctx.globalCompositeOperation="lighter";
-    ctx.fillStyle=p.col; ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
+    const p = particles[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.08; p.life--;
+    ctx.globalCompositeOperation="lighter"; ctx.fillStyle=p.col; ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
     if(p.life<=0) particles.splice(i,1);
   }
   requestAnimationFrame(stepFX);
 }
 new ResizeObserver(resizeFX).observe(stage); resizeFX(); stepFX();
 
-/* ====== レンダリングループ ====== */
+/* ループ */
 function render(){ controls.update(); composer.render(); }
 renderer.setAnimationLoop(render);
 
-/* ====== UI配線 ====== */
+/* UI */
 document.getElementById("apply").addEventListener("click", ()=>{
   const p = Math.max(1, Math.floor(Number(document.getElementById("people").value)||0));
   spinsLeft = p*2; refreshOrders(); showToast(`人数 ${p}人 / 合計 ${spinsLeft}回`);
 });
 document.getElementById("spin").addEventListener("click", spin);
-document.getElementById("undo").addEventListener("click", ()=>{ if(spinning||history.length===0) return; history.pop(); spinsLeft += 1; refreshOrders(); });
-document.getElementById("reset").addEventListener("click", ()=>{ if(spinning) return; history=[]; spinsLeft=0; refreshOrders(); });
+document.getElementById("undo").addEventListener("click", ()=>{
+  if(spinning||history.length===0) return; history.pop(); spinsLeft += 1; refreshOrders();
+});
+document.getElementById("reset").addEventListener("click", ()=>{
+  if(spinning) return; history=[]; spinsLeft=0; refreshOrders();
+});
 document.addEventListener("keydown", e=>{
   if(e.key.toLowerCase()==="f"){
     const de=document.documentElement;
@@ -294,7 +294,7 @@ document.addEventListener("keydown", e=>{
   }
 });
 
-/* 初期構築 */
+/* 初期化 */
 refreshOrders();
 showToast("face.png をクリックするか回すと開始");
 intro.addEventListener("click", ()=> intro.classList.add("hide"));

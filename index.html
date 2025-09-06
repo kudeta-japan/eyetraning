@@ -37,15 +37,17 @@
   .face{ position:fixed; inset:0; display:grid; place-items:center; z-index:10; pointer-events:none; opacity:0; transition:.35s ease; }
   .face.show{ opacity:1; }
   .face img{ width:min(68vmin,520px); border-radius:16px; box-shadow:0 22px 70px rgba(0,0,0,.55) }
-  /* 人数モーダル */
-  .modal{ position:fixed; inset:0; display:grid; place-items:center; background:rgba(0,0,0,.5); z-index:9999; }
-  .modal:not(.open){ display:none }
-  .card{ background:#141934; padding:18px 20px; border-radius:14px; width:min(92vw,360px);
-      box-shadow:0 20px 60px rgba(0,0,0,.45); color:#fff; }
-  .card h3{ margin:0 0 8px; font-size:18px }
-  .card input{ width:100%; padding:10px 12px; font-size:16px; border-radius:10px; border:1px solid rgba(255,255,255,.18);
-      background:#0e1230; color:#fff; }
-  .card .row{ display:flex; justify-content:flex-end; gap:10px; margin-top:12px }
+<!-- 人数モーダル -->
+<div id="setupModal" class="modal open">
+  <div class="card">
+    <h3>人数を入力</h3>
+    <input id="peopleInput" type="number" min="1" step="1" value="2" />
+    <div class="row">
+      <!-- ← submit ではなく button に変更 -->
+      <button id="okBtn" type="button">OK</button>
+    </div>
+  </div>
+</div>
   /* 背景のなだらかなグラデーション */
   .vignette{ position:absolute; inset:-20%; background:radial-gradient(70% 60% at 50% 38%, #14192e, transparent 60%), #000; }
 </style>

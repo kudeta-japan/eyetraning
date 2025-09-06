@@ -3,91 +3,76 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Cheese Wonderland — Casino LED Roulette</title>
+<title>Cheese Wonderland — Fullscreen Roulette</title>
 <style>
-  :root{ --ink:#eaf0ff; --gold:#f7c84b; --accent:#ff5a76 }
-  html,body{height:100%;margin:0;overflow:hidden;color:var(--ink);
-    font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,"Noto Sans JP")}
-  /* 背景：深いグラデ＋微ノイズ */
-  body::before{
-    content:""; position:fixed; inset:0; z-index:-2;
-    background:
-      radial-gradient(1600px 900px at 50% -10%, rgba(255,255,255,.08), transparent 60%),
-      radial-gradient(900px 700px at 80% 120%, rgba(255,120,160,.08), transparent 70%),
-      #05060e;
+  :root{
+    --bg:#080b14; --ink:#eef2ff; --panel:#0e1330;
+    --gold:#f3c862; --gold2:#a37b2e; --accent:#ff5a76;
   }
-  body::after{
-    content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
-    background-image:url('data:image/svg+xml;utf8,\
-    <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">\
-      <filter id="n"><feTurbulence baseFrequency=".8" numOctaves="2" seed="3" type="fractalNoise"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="table" tableValues="0 .06"/></feComponentTransfer></filter>\
-      <rect width="120" height="120" filter="url(%23n)" />\
-    </svg>');
-    opacity:.8; mix-blend-mode:soft-light;
-  }
-
+  html,body{height:100%;margin:0;background:radial-gradient(1000px 700px at 70% -10%, rgba(255,255,255,.06), transparent 60%), var(--bg); color:var(--ink); font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,"Noto Sans JP"; overflow:hidden}
   #stage{position:fixed;inset:0}
-  #fx{position:fixed;inset:0;pointer-events:none;z-index:52}
 
   /* 残り回数 */
-  #leftBadge{position:fixed;left:12px;top:12px;z-index:30;
-    background:rgba(16,20,36,.72); border:1px solid rgba(255,255,255,.12);
-    padding:8px 12px;border-radius:12px;font-weight:800;backdrop-filter:blur(6px)}
-  #leftBadge b{color:#fff}
+  #leftBadge{position:fixed;left:10px;top:10px;z-index:20;background:rgba(20,24,40,.7);
+    border:1px solid rgba(255,255,255,.1);padding:8px 12px;border-radius:10px;font-weight:800;backdrop-filter: blur(4px)}
 
   /* ボタン */
-  #controls{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
-    display:flex;gap:14px;z-index:30}
-  button{appearance:none;border:none;border-radius:14px;padding:14px 22px;
-    font-size:18px;font-weight:900;cursor:pointer;transition:.2s transform, .2s filter}
-  button:active{transform:translateY(1px)}
-  .cta{background:linear-gradient(180deg,#ffe08a,#f7b733);color:#151515;
-    box-shadow:0 10px 30px rgba(247,183,51,.25), inset 0 1px 0 rgba(255,255,255,.6)}
-  .ghost{background:#121637;color:#eaf0ff;border:1px solid rgba(255,255,255,.14)}
-  .muted{filter:grayscale(.9) brightness(.9)}
-  button:disabled{opacity:.55;cursor:not-allowed}
+  #controls{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:14px;z-index:20}
+  button{appearance:none;border:none;border-radius:14px;padding:14px 22px;font-size:18px;font-weight:900;cursor:pointer;
+    background:linear-gradient(180deg,#ffe08a,#f7b733);color:#141414;box-shadow:0 10px 28px rgba(0,0,0,.45)}
+  button.ghost{background:#1c2342;color:#e9ecff;border:1px solid rgba(255,255,255,.14);box-shadow:none}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  #mute{width:46px;padding:12px 0}
 
-  /* トースト */
-  #toast{position:fixed;left:50%;top:16px;transform:translateX(-50%) translateY(-16px);
-    background:#10143a;border:1px solid rgba(255,255,255,.18);padding:10px 14px;border-radius:12px;
-    font-weight:800;opacity:0;transition:.25s;z-index:50;backdrop-filter:blur(6px)}
+  /* 当たりトースト */
+  #toast{position:fixed;left:50%;top:16px;transform:translateX(-50%) translateY(-16px);background:#111533;
+    border:1px solid rgba(255,255,255,.18);padding:10px 14px;border-radius:12px;font-weight:800;opacity:0;
+    transition:.25s;z-index:30}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-  /* モーダル */
-  .modal{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.6);z-index:60}
-  .card{background:linear-gradient(180deg,#171c3b,#0f1433);
-    border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:22px 20px;
-    width:min(92vw,480px);box-shadow:0 24px 60px rgba(0,0,0,.6)}
-  .row{display:flex;gap:10px;align-items:center}
-  input[type=number]{flex:1;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.15);
+  /* 人数モーダル */
+  #start{position:fixed;inset:0;display:grid;place-items:center;background:rgba(5,8,16,.92);z-index:40}
+  #start .card{background:linear-gradient(180deg,#161c33,#0f1330);border:1px solid rgba(255,255,255,.12);border-radius:16px;
+    padding:20px;width:min(92vw,480px);box-shadow:0 24px 60px rgba(0,0,0,.6)}
+  #start .row{display:flex;gap:10px;align-items:center}
+  #start input[type=number]{flex:1;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.15);
     background:#0c1126;color:#fff;font-size:18px}
 
   /* 顔オーバーレイ */
-  #faceOverlay{position:fixed;inset:0;display:none;place-items:center;z-index:55;pointer-events:none}
-  #faceOverlay .bg{position:absolute;inset:0;background:radial-gradient(600px 400px at 50% 40%, rgba(255,255,255,.08), transparent 60%);backdrop-filter:blur(2px)}
-  #faceOverlay img{max-width:min(60vw,520px);max-height:60vh;border-radius:20px;
-    box-shadow:0 20px 70px rgba(0,0,0,.6);animation:pop .5s ease both}
-  @keyframes pop{0%{transform:scale(.82);opacity:0} 100%{transform:scale(1);opacity:1}}
+  #faceOverlay{position:fixed;inset:0;display:none;place-items:center;background:radial-gradient(600px 420px at 50% 40%,rgba(255,255,255,.06),transparent 60%);z-index:35;pointer-events:none}
+  #faceOverlay img{max-width:62vw;max-height:62vh;border-radius:16px;box-shadow:0 18px 60px rgba(0,0,0,.55);animation:pop .5s ease both}
+  @keyframes pop{0%{transform:scale(.86);opacity:0}100%{transform:scale(1);opacity:1}}
 
   /* サマリー */
-  #summary{position:fixed;inset:0;display:none;background:rgba(3,5,12,.94);z-index:65}
+  #summary{position:fixed;inset:0;display:none;background:rgba(0,0,0,.92);z-index:50;color:#fff}
   #summary .wrap{max-width:980px;margin:60px auto;padding:0 16px}
-  #summary h2{margin:0 0 14px}
-  #summary table{width:100%;border-collapse:collapse;background:rgba(255,255,255,.02);
-    border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden}
-  #summary th,#summary td{padding:12px;border-bottom:1px solid rgba(255,255,255,.08)}
+  #summary table{width:100%;border-collapse:collapse;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden}
+  #summary th,#summary td{padding:10px;border-bottom:1px solid rgba(255,255,255,.08)}
   #summary th{text-align:left;color:#aeb8ff}
   #summary tr:last-child td{border-bottom:none}
+
+  /* LED リム（CSSだけで演出） */
+  #ledRing{position:fixed;inset:0;pointer-events:none;display:grid;place-items:center;z-index:10}
+  #ledRing .ring{position:relative; width:min(78vmin,900px); aspect-ratio:1/1;}
+  #ledRing .ring .bulb{position:absolute; width:1.8%; aspect-ratio:1/1; border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #fff8, #fff0 45%), radial-gradient(circle, #fbe6a4 0, #caa24a 60%, #7a5b1b 100%);
+    box-shadow:0 0 8px rgba(243,200,98,.55);}
+  /* 64等配 */
+  /* 生成は JS で配置 & 点滅アニメ付与 */
+  .blink{animation:blink 1.2s linear infinite}
+  @keyframes blink{0%,100%{filter:brightness(.8)} 50%{filter:brightness(1.5)}}
 </style>
 </head>
 <body>
 <div id="stage"></div>
-<canvas id="fx"></canvas>
+
+<!-- LED Rim -->
+<div id="ledRing"><div class="ring" id="ring"></div></div>
 
 <div id="leftBadge">残り <b id="leftNum">--</b> 回</div>
 
 <div id="controls">
-  <button id="spin" class="cta">回す 🎡</button>
+  <button id="spin">回す 🎡</button>
   <button id="mute" class="ghost" title="ミュート切替">🔈</button>
   <button id="reset" class="ghost">リセット 🔄</button>
 </div>
@@ -95,22 +80,19 @@
 <div id="toast">当たり！</div>
 
 <!-- 人数入力 -->
-<div id="start" class="modal">
+<div id="start">
   <div class="card">
     <h2 style="margin:0 0 10px">人数を入力してください</h2>
     <div class="row">
-      <input type="number" id="people" min="1" step="1" value="2" />
-      <button id="startBtn" class="cta" type="button">開始</button>
+      <input type="number" id="people" min="1" step="1" value="2">
+      <button id="startBtn">開始</button>
     </div>
     <div style="opacity:.7;margin-top:10px">※ 1人2回プレイ</div>
   </div>
 </div>
 
 <!-- 顔オーバーレイ -->
-<div id="faceOverlay">
-  <div class="bg"></div>
-  <img id="faceImg" alt="" />
-</div>
+<div id="faceOverlay"><img id="faceImg" alt=""></div>
 
 <!-- 結果サマリー -->
 <div id="summary">
@@ -118,41 +100,49 @@
     <h2>結果まとめ</h2>
     <div id="list"></div>
     <div style="margin-top:14px;display:flex;gap:10px">
-      <button id="again" class="cta">もう一度</button>
+      <button id="again">もう一度</button>
       <button id="closeSummary" class="ghost">閉じる</button>
     </div>
   </div>
 </div>
 
-<!-- three.js（非module） -->
+<!-- three.js（非moduleで確実動作） -->
 <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
 <script>
-/* ===== 設定 ===== */
-const FACE_SHOW_MS = 2000;
-const FACE_MODE = "map"; // "map" / "random"
-const CAMERA_TILT = 6 * Math.PI/180;
+/* ================= 基本設定 ================= */
+const FACE_SHOW_MS = 1700;              // 表情表示の長さ
+const FACE_MODE = "map";                // "map" 固定 / "random" ランダム
+const TAU = Math.PI * 2;
+const SECTOR = 60;                      // 1区画60°
+const deg = d => THREE.MathUtils.degToRad(d);
+const norm = a => THREE.MathUtils.euclideanModulo(a, TAU);
+const shortestDelta = (from, to) => {
+  let d = norm(to) - norm(from);
+  if (d > Math.PI) d -= TAU;
+  if (d < -Math.PI) d += TAU;
+  return d;
+};
 
-/* ===== データ ===== */
+/* ================= データ ================= */
 const ITEMS = [
-  { name:"えびフリッター", emoji:"🍤" },
-  { name:"ローストポーク", emoji:"🍖" },
-  { name:"フライドチキン", emoji:"🍗" },
-  { name:"バゲット",       emoji:"🥖" },
-  { name:"野菜盛り",       emoji:"🥦" },
-  { name:"牛コロカツ",     emoji:"🥩" },
+  { name:"牛コロカツ",     emoji:"🥩", centerDeg:  60 },
+  { name:"えびフリッター", emoji:"🍤", centerDeg: 120 },
+  { name:"ローストポーク", emoji:"🍖", centerDeg: 180 },
+  { name:"フライドチキン", emoji:"🍗", centerDeg: 240 },
+  { name:"バゲット",       emoji:"🥖", centerDeg: 300 },
+  { name:"野菜盛り合わせ", emoji:"🥦", centerDeg:   0 },
 ];
 const FACES = ["face.png","suprised.png","happy.png","laugh.png","funny.png"];
 const FACE_MAP = {
+  "牛コロカツ":"funny.png",
   "えびフリッター":"happy.png",
   "ローストポーク":"laugh.png",
   "フライドチキン":"suprised.png",
   "バゲット":"face.png",
-  "野菜盛り":"happy.png",
-  "牛コロカツ":"funny.png",
+  "野菜盛り合わせ":"happy.png",
 };
-const N = ITEMS.length, ARC = 360/N;
 
-/* ===== 状態 ===== */
+/* ================= 状態とDOM ================= */
 let spinsLeft = 0, spinning = false, pointerAngle = 0;
 let results = [];
 const leftNum = document.getElementById('leftNum');
@@ -160,132 +150,99 @@ const toast = document.getElementById('toast');
 const faceOverlay = document.getElementById('faceOverlay');
 const faceImg = document.getElementById('faceImg');
 const setLeft = (n)=> leftNum.textContent = n;
-const showToast = (m)=>{ toast.textContent=m; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), 1200); };
+const showToast = (m)=>{ toast.textContent=m; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), 1100); };
 
-/* ===== Three.js 基本 ===== */
+/* ================= LED Rim 生成 ================= */
+(function makeLED(){
+  const ring = document.getElementById('ring');
+  const bulbs = 64;
+  for(let i=0;i<bulbs;i++){
+    const b = document.createElement('div');
+    b.className = 'bulb blink';
+    const a = i/bulbs * 360;
+    b.style.left = 50 + 46 * Math.cos(deg(a)) + '%';
+    b.style.top  = 50 + 46 * Math.sin(deg(a)) + '%';
+    b.style.animationDelay = `${(i%8)*0.08}s`;
+    ring.appendChild(b);
+  }
+})();
+
+/* ================= Three.js セットアップ ================= */
 const stage = document.getElementById('stage');
 const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.setSize(innerWidth, innerHeight);
 stage.appendChild(renderer.domElement);
 
-let camera; const scene = new THREE.Scene();
+let camera;
+const scene = new THREE.Scene();
 
-/* 盤（テクスチャ） */
 const loader = new THREE.TextureLoader();
-const tex = loader.load('roulette_ui_6_sections.png');
+const tex = loader.load('roulette_ui_6_sections.png'); // 6分割PNG
 tex.colorSpace = THREE.SRGBColorSpace;
 const wheel = new THREE.Mesh(new THREE.PlaneGeometry(1,1), new THREE.MeshBasicMaterial({ map:tex, transparent:true }));
 scene.add(wheel);
 
-/* 外周リム＋グロー */
-const rim = new THREE.Mesh(new THREE.RingGeometry(0.48, 0.52, 128),
-  new THREE.MeshBasicMaterial({ color:0xf3c24a, transparent:true, opacity:.96 }));
-scene.add(rim);
-const rimGlow = new THREE.Mesh(new THREE.RingGeometry(0.52, 0.585, 128),
-  new THREE.MeshBasicMaterial({ color:0xf3c24a, transparent:true, opacity:.22 }));
-scene.add(rimGlow);
-
-/* 光沢スイープ（回転させる） */
-const gloss = new THREE.Mesh(new THREE.RingGeometry(0.35, 0.58, 64, 1, 0, Math.PI/3),
-  new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:.06 }));
-scene.add(gloss);
-
-/* 針（本体＋ゴースト） */
+// 針（三角形）
 const pointerGroup = new THREE.Group(); scene.add(pointerGroup);
-function makePointer(){
-  const s = 1;
-  const shape = new THREE.Shape();
-  shape.moveTo(0, 0.20*s);
-  shape.lineTo(-0.12*s, -0.22*s);
-  shape.lineTo( 0.12*s, -0.22*s);
-  shape.lineTo(0, 0.20*s);
-  const geom = new THREE.ShapeGeometry(shape);
-  const base = new THREE.Mesh(geom, new THREE.MeshBasicMaterial({ color:0xff5a76 }));
-  const edge = new THREE.Mesh(new THREE.ShapeGeometry(shape),
-    new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:.18 }));
-  edge.scale.set(1.02,1.02,1);
-  const cap = new THREE.Mesh(new THREE.CircleGeometry(0.06, 48),
-    new THREE.MeshBasicMaterial({ color:0xf3c24a }));
-  cap.position.set(0,-0.18*s,0.001);
-  const g=new THREE.Group(); g.add(base,edge,cap); return g;
-}
-const pointer = makePointer(); pointerGroup.add(pointer);
-const ghosts=[]; for(let i=0;i<4;i++){ const g=makePointer(); g.children.forEach(c=>c.material=c.material.clone()); g.children.forEach(c=>c.material.opacity=.08-i*0.015); ghosts.push(g); pointerGroup.add(g); }
+const shape = new THREE.Shape();
+shape.moveTo(0, 0.18);
+shape.lineTo(-0.12, -0.18);
+shape.lineTo( 0.12, -0.18);
+shape.lineTo(0, 0.18);
+const pointer = new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshBasicMaterial({ color:0xff5a76 }));
+pointerGroup.add(pointer);
 
-/* LEDリング（64球） */
-const ledGroup = new THREE.Group(); scene.add(ledGroup);
-const LED_COUNT = 64;
-const leds = [];
-for(let i=0;i<LED_COUNT;i++){
-  const bulb = new THREE.Mesh(new THREE.CircleGeometry(0.012, 24),
-    new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:.2 }));
-  const glow = new THREE.Mesh(new THREE.CircleGeometry(0.03, 24),
-    new THREE.MeshBasicMaterial({ color:0xfff1b0, transparent:true, opacity:.08 }));
-  const g = new THREE.Group(); g.add(glow, bulb);
-  leds.push({g, bulb, glow, angle:(i/LED_COUNT)*Math.PI*2});
-  ledGroup.add(g);
-}
-
-/* フィット */
 function fit(){
-  const w=innerWidth, h=innerHeight;
+  const w = innerWidth, h = innerHeight;
   renderer.setSize(w,h);
   camera = new THREE.OrthographicCamera(-w/2, w/2, h/2, -h/2, -10, 10);
   camera.position.set(0,0,5); camera.lookAt(0,0,0);
-
-  const size = Math.min(w,h)*0.86;
-  wheel.scale.set(size,size,1);
-  rim.scale.set(size,size,1); rimGlow.scale.set(size,size,1);
-  gloss.scale.set(size,size,1);
-
-  const ps=size*0.22;
-  [pointer,...ghosts].forEach(p=>{ p.scale.set(ps,ps,1); p.position.set(0,size*0.40,0); });
+  const size = Math.min(w,h) * 0.86;
+  wheel.scale.set(size, size, 1);
+  const ps = size * 0.22;
+  pointer.scale.set(ps, ps, 1);
+  pointer.position.set(0, size*0.40, 0);
   pointerGroup.rotation.z = pointerAngle = 0;
-
-  // LED位置（外周ちょい外）
-  const r = 0.565*size;
-  leds.forEach(({g,angle})=>{
-    g.position.set(Math.cos(angle)*r, Math.sin(angle)*r, 0.002);
-    g.scale.set(size,size,1); // geometryは1基準なのでスケールで拡大
-  });
-  ledGroup.scale.set(1,1,1);
 }
 addEventListener('resize', fit); fit();
 
-/* アニメーション */
-let ledPhase=0, ledSpeed=0.5, glossSpeed=0.15;
-let last=performance.now();
+/* ================= レンダリング ================= */
 function render(){
-  const now=performance.now(), dt=(now-last)/1000; last=now;
-
-  // LED 追いかけ点灯
-  ledPhase += ledSpeed*dt;
-  leds.forEach(({bulb,glow,angle})=>{
-    const k = 0.6 + 0.4*Math.cos(angle*4 - ledPhase*8); // 4群で波
-    bulb.material.opacity = 0.15 + 0.75*Math.max(0,k);
-    glow.material.opacity = 0.04 + 0.22*Math.max(0,k);
-    bulb.material.color.setHSL(0.12, 0.9, 0.55 + 0.2*k);
-    glow.material.color.setHSL(0.12, 1.0, 0.7);
-  });
-
-  // 光沢スイープ回転
-  gloss.rotation.z += glossSpeed*dt;
-
+  wheel.rotation.z = 0; // 盤は固定
   renderer.render(scene, camera);
   requestAnimationFrame(render);
 }
 render();
 
-/* ===== Audio（BGM+SE） ===== */
-let audioCtx, master, loopTimer, muted=false, bgm;
+/* ================= サウンド ================= */
+let audioCtx, master, loopTimer, muted=false, bgmNode;
 function ensureAudio(){
   if(audioCtx) return;
   audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-  master = audioCtx.createGain(); master.gain.value=.5; master.connect(audioCtx.destination);
-  bgm = new Audio(); // お好みのBGMに差替OK
-  bgm.src = "data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"; // 省略版
-  bgm.loop = true; bgm.volume = 0.35;
+  master = audioCtx.createGain(); master.gain.value=.45; master.connect(audioCtx.destination);
+  // 軽いBGM（3和音アルペジオ）
+  const bpm=112, beat=60/bpm;
+  function startBGM(){
+    if(muted) return;
+    stopBGM();
+    bgmNode = setInterval(()=>{
+      const t0 = audioCtx.currentTime;
+      [0,1,2,3,4,5,6,7].forEach((step)=>{
+        const t = t0 + step*beat/2;
+        const f = [392,494,587,659][step%4]; // G B D E
+        const o = audioCtx.createOscillator(); o.type='sine'; o.frequency.value=f;
+        const g = audioCtx.createGain(); g.gain.value=0.0001; o.connect(g).connect(master);
+        o.start(t);
+        g.gain.setValueAtTime(0.0001,t);
+        g.gain.exponentialRampToValueAtTime(0.10,t+0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001,t+beat/2-0.02);
+        o.stop(t+beat/2);
+      });
+    }, beat*1000*4);
+  }
+  function stopBGM(){ if(bgmNode){ clearInterval(bgmNode); bgmNode=null; } }
+  ensureAudio.startBGM = startBGM; ensureAudio.stopBGM = stopBGM;
 }
 function startSpinLoop(){
   if(muted) return; ensureAudio(); stopSpinLoop();
@@ -301,7 +258,7 @@ function startSpinLoop(){
       g.gain.exponentialRampToValueAtTime(0.0001,t+0.15);
       o.stop(t+0.16);
     });
-  }, 220);
+  }, 260);
 }
 function stopSpinLoop(){ if(loopTimer){ clearInterval(loopTimer); loopTimer=null; } }
 function playHitSFX(){
@@ -310,133 +267,85 @@ function playHitSFX(){
   o.type='square'; o.frequency.setValueAtTime(880, audioCtx.currentTime);
   g.gain.value=0.0001; o.connect(g).connect(master); o.start();
   const t = audioCtx.currentTime;
-  g.gain.exponentialRampToValueAtTime(0.4, t+0.01);
+  g.gain.exponentialRampToValueAtTime(0.35, t+0.01);
   o.frequency.exponentialRampToValueAtTime(1760, t+0.12);
   g.gain.exponentialRampToValueAtTime(0.0001, t+0.28);
   o.stop(t+0.30);
 }
 
-/* ===== 紙吹雪 ===== */
-const fx = document.getElementById('fx'); const ctx2 = fx.getContext('2d');
-function resizeFX(){ fx.width=innerWidth*devicePixelRatio; fx.height=innerHeight*devicePixelRatio; ctx2.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); }
-resizeFX(); addEventListener('resize', resizeFX);
-let confs=[];
-function burst(){
-  const cx=innerWidth/2, cy=innerHeight*0.38;
-  for(let i=0;i<220;i++){
-    const a=Math.random()*Math.PI*2, sp=2.2+Math.random()*4;
-    confs.push({x:cx,y:cy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:60+Math.random()*60,
-      col:`hsl(${20+Math.random()*50} 90% ${60+Math.random()*20}%)`,size:2+Math.random()*3});
-  }
+/* ================= ルール（抽選 & 角度合わせ） ================= */
+const targetAngleFor = idx => deg(ITEMS[idx].centerDeg - 90);
+function pick(){ return Math.floor(Math.random()*ITEMS.length); }
+function faceFor(name){
+  if(FACE_MODE === "random") return FACES[Math.floor(Math.random()*FACES.length)];
+  return FACE_MAP[name] || "face.png";
 }
-(function step(){
-  ctx2.clearRect(0,0,innerWidth,innerHeight);
-  for(let i=confs.length-1;i>=0;i--){
-    const p=confs[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.08; p.life--;
-    ctx2.globalCompositeOperation="lighter"; ctx2.fillStyle=p.col; ctx2.beginPath(); ctx2.arc(p.x,p.y,p.size,0,Math.PI*2); ctx2.fill();
-    if(p.life<=0) confs.splice(i,1);
-  }
-  requestAnimationFrame(step);
-})();
 
-/* ===== 抽選＆スピン ===== */
-function pick(){ return Math.floor(Math.random()*N); }
-function faceFor(name){ return FACE_MODE==="random" ? FACES[Math.floor(Math.random()*FACES.length)] : (FACE_MAP[name]||"face.png"); }
-
+/* ================= スピン ================= */
 function spin(){
   if(spinning || spinsLeft<=0) return;
-  spinning = true; spinBtn.disabled = true;
-
-  // LED/グロス高速化
-  ledSpeed = 4.5; glossSpeed = 0.9;
+  spinning = true; document.getElementById('spin').disabled = true;
+  ensureAudio(); ensureAudio.startBGM?.();
   startSpinLoop();
 
   const idx = pick();
-  const center = idx*ARC + ARC/2;
-  const jitter = (Math.random()*ARC*0.2) - (ARC*0.1);
-  const deltaDeg = (6*360 + (center - 90) + jitter);
-  const start = pointerAngle;
-  const end = start + THREE.MathUtils.degToRad(deltaDeg);
-  const dur = 5600; const t0 = performance.now();
+  const jitter = deg((Math.random()*SECTOR*0.2) - (SECTOR*0.1)); // ±10%のブレ
+  const start  = norm(pointerAngle);
+  const target = norm(targetAngleFor(idx) + jitter);
+  const end    = start + 6*TAU + shortestDelta(start, target); // 6回転＋最短差
 
-  function easeOutCubic(t){ return 1 - Math.pow(1-t, 3); }
-  function easeOutBack(t){ const c1=1.70158, c3=c1+1; return 1 + c3*Math.pow(t-1,3) + c1*Math.pow(t-1,2); }
+  const dur = 5200, t0 = performance.now();
+  const ease = t => 1 - Math.pow(1-t,3);
 
-  function anim(now){
-    const t = Math.min(1,(now-t0)/dur);
-    const k = easeOutCubic(t);
-    pointerGroup.rotation.z = start + (end-start)*k;
+  (function anim(now){
+    const t = Math.min(1, (now - t0)/dur);
+    pointerGroup.rotation.z = start + (end - start) * ease(t);
+    if(t<1) return requestAnimationFrame(anim);
 
-    ghosts.forEach((g,i)=> g.rotation.z = pointerGroup.rotation.z - 0.05*(i+1));
-    camera.rotation.z = (1-k) * CAMERA_TILT;
-
-    if(t<1){ requestAnimationFrame(anim); }
-    else{
-      // 仕上げのバウンド
-      const t1=performance.now(), d2=380, sAngle=pointerGroup.rotation.z;
-      (function back(now2){
-        const tt = Math.min(1,(now2-t1)/d2);
-        const kk = easeOutBack(tt);
-        pointerGroup.rotation.z = sAngle + (end - sAngle)*kk;
-        if(tt<1) requestAnimationFrame(back); else finish();
-      })(t1+16);
-    }
-  }
-  requestAnimationFrame(anim);
-
-  function finish(){
-    pointerAngle = end; stopSpinLoop(); camera.rotation.z=0;
-
-    // LEDバースト→アイドル戻し
-    let burstT=0; const burstId=setInterval(()=>{ burstT+=1; ledSpeed = 10 - burstT*1.2; if(ledSpeed<=0.6){ ledSpeed=0.6; clearInterval(burstId);} }, 90);
-    glossSpeed = 0.15;
+    pointerAngle = norm(end);
+    stopSpinLoop();
 
     const it = ITEMS[idx];
     results.push({ idx, name: it.name, emoji: it.emoji });
 
     faceImg.src = faceFor(it.name);
-    faceOverlay.style.display='grid';
-    playHitSFX(); burst();
+    faceOverlay.style.display = 'grid';
+    playHitSFX();
     showToast(`${it.emoji} ${it.name}！`);
     setTimeout(()=>{ faceOverlay.style.display='none'; }, FACE_SHOW_MS);
 
     spinsLeft -= 1; setLeft(spinsLeft);
-    spinning=false; spinBtn.disabled=(spinsLeft<=0);
+    spinning = false; document.getElementById('spin').disabled = (spinsLeft<=0);
     if(spinsLeft<=0) showSummary();
-  }
+  })(performance.now());
 }
 
-/* ===== サマリー ===== */
+/* ================= サマリー ================= */
 function showSummary(){
-  const map=new Map(); results.forEach(r=> map.set(r.name,(map.get(r.name)||0)+1));
-  const rows=[...map.entries()].map(([n,c])=>`<tr><td>${n}</td><td style="text-align:right">${c}</td></tr>`).join('');
+  const map = new Map();
+  results.forEach(r=> map.set(r.name, (map.get(r.name)||0)+1));
+  const rows = [...map.entries()].map(([name,c])=>`<tr><td>${name}</td><td style="text-align:right">${c}</td></tr>`).join('');
   document.getElementById('list').innerHTML =
     `<table><thead><tr><th>メニュー</th><th style="text-align:right">数量</th></tr></thead><tbody>${rows||'<tr><td colspan="2">なし</td></tr>'}</tbody></table>`;
   document.getElementById('summary').style.display='block';
 }
 
-/* ===== UI配線 ===== */
-const spinBtn = document.getElementById('spin');
-spinBtn.addEventListener('click', spin);
-
+/* ================= UI配線 ================= */
+document.getElementById('spin').addEventListener('click', spin);
 document.getElementById('reset').addEventListener('click', ()=>{
-  stopSpinLoop(); results=[]; spinsLeft=0; setLeft('--');
+  stopSpinLoop(); ensureAudio?.stopBGM?.(); results=[]; spinsLeft=0; setLeft('--');
   document.getElementById('summary').style.display='none';
-  spinBtn.disabled=false; pointerGroup.rotation.z=pointerAngle=0;
-  ledSpeed=0.5; glossSpeed=0.15;
+  document.getElementById('spin').disabled=false;
+  pointerGroup.rotation.z = pointerAngle = 0;
   document.getElementById('start').style.display='grid';
 });
-
 document.getElementById('mute').addEventListener('click', ()=>{
-  muted=!muted; document.getElementById('mute').classList.toggle('muted', muted);
-  showToast(muted?'ミュート':'サウンドON');
-  try{ ensureAudio(); if(bgm){ muted?bgm.pause():bgm.play(); } }catch(e){}
+  muted=!muted; showToast(muted?'ミュート':'サウンドON');
 });
-
 document.getElementById('startBtn').addEventListener('click', ()=>{
   const p = Math.max(1, Math.floor(Number(document.getElementById('people').value)||0));
   spinsLeft = p*2; setLeft(spinsLeft); results=[]; document.getElementById('start').style.display='none';
-  try{ ensureAudio(); bgm && bgm.play(); }catch(e){}
+  ensureAudio(); ensureAudio.startBGM?.();
   showToast(`人数 ${p}人 / 合計 ${spinsLeft}回`);
 });
 document.getElementById('again').addEventListener('click', ()=>{

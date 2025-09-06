@@ -32,6 +32,7 @@
   .intro img{width:min(70%,520px);border-radius:16px;box-shadow:0 18px 60px rgba(0,0,0,.45)}
   .intro.hide{animation:fadeOut .6s ease forwards}
   @keyframes fadeOut{to{opacity:0;transform:translateY(-10px);pointer-events:none}}
+  th,td{font-size:14px}
 </style>
 </head>
 <body>
@@ -78,6 +79,7 @@
 
 <!-- Three.js + postprocessing (CDN) -->
 <script type="module">
+/* ====== ESM imports (CDN) ====== */
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
 import { EffectComposer } from "https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/EffectComposer.js";
@@ -134,6 +136,7 @@ const wheelGroup = new THREE.Group(); scene.add(wheelGroup);
 const loader = new THREE.TextureLoader();
 let wheelTex = loader.load("roulette_ui_6_sections.png"); // 同階層のPNG
 wheelTex.anisotropy = 8; wheelTex.encoding = THREE.sRGBEncoding;
+
 const disc = new THREE.Mesh(new THREE.CircleGeometry(3.2, 256), new THREE.MeshStandardMaterial({ map: wheelTex, metalness:.05, roughness:.55 }));
 disc.rotation.x = -0.28; // 奥に少し倒す
 wheelGroup.add(disc);
@@ -175,39 +178,39 @@ function refreshOrders(){
 }
 
 /* ====== 均等抽選 ====== */
-function pickEqual(){
-  return Math.floor(Math.random()*N);
-}
+function pickEqual(){ return Math.floor(Math.random()*N); }
 
 /* ====== トースト ====== */
-function showToast(msg){ toast.textContent=msg; toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"), 1400); }
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(()=>toast.classList.remove("show"), 1400);
+}
 
 /* ====== 回す（減速イージング＋SE＋紙吹雪） ====== */
 function spin(){
   if(spinning || spinsLeft<=0) return;
-  // 初回スピンでフェイス消す
-  if(!intro.classList.contains("hide")) intro.classList.add("hide");
+  if(!intro.classList.contains("hide")) intro.classList.add("hide"); // 初回フェイス消し
 
-  spinning = true; document.getElementById("spin").disabled = true;
+  spinning = true;
+  document.getElementById("spin").disabled = true;
 
   const idx = pickEqual();
-  // 画像は右=0° 基準、slice center = idx*ARC + ARC/2、ポインタは上=90° → オフセット= center - 90
+  // 画像は右=0°、扇形中央：idx*ARC + ARC/2、ポインタは上=90° → center - 90 が目標オフセット
   const center = idx*ARC + ARC/2;
-  const jitter = (Math.random()*ARC*0.2) - (ARC*0.1);
-  const deltaDeg = -(6*360 + (center - 90) + jitter); // 6回転＋目標
+  const jitter = (Math.random()*ARC*0.2) - (ARC*0.1);        // ちょいブレ
+  const deltaDeg = -(6*360 + (center - 90) + jitter);        // 6回転＋目標
   const start = currentAngle;
   const end = currentAngle + THREE.MathUtils.degToRad(deltaDeg);
   const dur = 5600;
   const t0 = performance.now();
-  tickSoundStart();
 
+  tickSoundStart();
   function easeOutCubic(t){ return 1 - Math.pow(1-t, 3); }
   function anim(now){
     const t = Math.min(1, (now - t0)/dur);
     const k = easeOutCubic(t);
-    const ang = start + (end - start)*k;
-    wheelGroup.rotation.z = ang;
-    renderer.setAnimationLoop(render);
+    wheelGroup.rotation.z = start + (end - start)*k;
     if(t<1){ requestAnimationFrame(anim); }
     else{
       currentAngle = end;
@@ -224,7 +227,7 @@ function spin(){
 let audioCtx, tickTimer;
 function tick(){
   if(!audioCtx) return;
-  const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
   o.type="square"; o.frequency.value = 1200 + Math.random()*300;
   g.gain.value = 0.0001; o.connect(g); g.connect(audioCtx.destination);
   o.start();
@@ -236,7 +239,10 @@ function tick(){
 function tickSoundStart(){
   audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
   let interval = 80; clearInterval(tickTimer); tickTimer = setInterval(tick, interval);
-  let t=0; const id = setInterval(()=>{ t+=1; interval = Math.min(220, 80 + t*4); clearInterval(tickTimer); tickTimer = setInterval(tick, interval); if(interval>=220) clearInterval(id); }, 260);
+  let t=0; const id = setInterval(()=>{ t+=1; interval = Math.min(220, 80 + t*4);
+    clearInterval(tickTimer); tickTimer = setInterval(tick, interval);
+    if(interval>=220) clearInterval(id);
+  }, 260);
 }
 function tickSoundStop(){ clearInterval(tickTimer); }
 
@@ -258,8 +264,10 @@ function burstParticles(){
 function stepFX(){
   ctx.clearRect(0,0,fx.width,fx.height);
   for(let i=particles.length-1;i>=0;i--){
-    const p = particles[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.08; p.life--;
-    ctx.globalCompositeOperation="lighter"; ctx.fillStyle=p.col; ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
+    const p = particles[i];
+    p.x+=p.vx; p.y+=p.vy; p.vy+=0.08; p.life--;
+    ctx.globalCompositeOperation="lighter";
+    ctx.fillStyle=p.col; ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
     if(p.life<=0) particles.splice(i,1);
   }
   requestAnimationFrame(stepFX);
@@ -278,7 +286,13 @@ document.getElementById("apply").addEventListener("click", ()=>{
 document.getElementById("spin").addEventListener("click", spin);
 document.getElementById("undo").addEventListener("click", ()=>{ if(spinning||history.length===0) return; history.pop(); spinsLeft += 1; refreshOrders(); });
 document.getElementById("reset").addEventListener("click", ()=>{ if(spinning) return; history=[]; spinsLeft=0; refreshOrders(); });
-document.addEventListener("keydown", e=>{ if(e.key.toLowerCase()==="f"){ const de=document.documentElement; if(!document.fullscreenElement){ de.requestFullscreen?.(); } else { document.exitFullscreen?.(); } } });
+document.addEventListener("keydown", e=>{
+  if(e.key.toLowerCase()==="f"){
+    const de=document.documentElement;
+    if(!document.fullscreenElement){ de.requestFullscreen?.(); }
+    else { document.exitFullscreen?.(); }
+  }
+});
 
 /* 初期構築 */
 refreshOrders();

@@ -3,13 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Cheese Wonderland — Fullscreen Roulette (Pro)</title>
+<title>Cheese Wonderland — Casino LED Roulette</title>
 <style>
-  :root{
-    --ink:#eaf0ff; --muted:#9aa3c7; --gold:#f7c84b; --accent:#ff5a76;
-  }
+  :root{ --ink:#eaf0ff; --gold:#f7c84b; --accent:#ff5a76 }
   html,body{height:100%;margin:0;overflow:hidden;color:var(--ink);
-    font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,"Noto Sans JP";}
+    font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,"Noto Sans JP")}
   /* 背景：深いグラデ＋微ノイズ */
   body::before{
     content:""; position:fixed; inset:0; z-index:-2;
@@ -29,6 +27,7 @@
   }
 
   #stage{position:fixed;inset:0}
+  #fx{position:fixed;inset:0;pointer-events:none;z-index:52}
 
   /* 残り回数 */
   #leftBadge{position:fixed;left:12px;top:12px;z-index:30;
@@ -63,14 +62,14 @@
   input[type=number]{flex:1;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.15);
     background:#0c1126;color:#fff;font-size:18px}
 
-  /* 顔オーバーレイ（中央ポップ） */
+  /* 顔オーバーレイ */
   #faceOverlay{position:fixed;inset:0;display:none;place-items:center;z-index:55;pointer-events:none}
   #faceOverlay .bg{position:absolute;inset:0;background:radial-gradient(600px 400px at 50% 40%, rgba(255,255,255,.08), transparent 60%);backdrop-filter:blur(2px)}
   #faceOverlay img{max-width:min(60vw,520px);max-height:60vh;border-radius:20px;
     box-shadow:0 20px 70px rgba(0,0,0,.6);animation:pop .5s ease both}
   @keyframes pop{0%{transform:scale(.82);opacity:0} 100%{transform:scale(1);opacity:1}}
 
-  /* 結果サマリー */
+  /* サマリー */
   #summary{position:fixed;inset:0;display:none;background:rgba(3,5,12,.94);z-index:65}
   #summary .wrap{max-width:980px;margin:60px auto;padding:0 16px}
   #summary h2{margin:0 0 14px}
@@ -79,9 +78,6 @@
   #summary th,#summary td{padding:12px;border-bottom:1px solid rgba(255,255,255,.08)}
   #summary th{text-align:left;color:#aeb8ff}
   #summary tr:last-child td{border-bottom:none}
-
-  /* 紙吹雪キャンバス */
-  #fx{position:fixed;inset:0;pointer-events:none;z-index:52}
 </style>
 </head>
 <body>
@@ -131,12 +127,12 @@
 <!-- three.js（非module） -->
 <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
 <script>
-/* =================== 設定 =================== */
-const FACE_SHOW_MS = 2000;          // 表情表示の長さ
-const FACE_MODE = "map";            // "map" / "random"
+/* ===== 設定 ===== */
+const FACE_SHOW_MS = 2000;
+const FACE_MODE = "map"; // "map" / "random"
 const CAMERA_TILT = 6 * Math.PI/180;
 
-/* =================== データ =================== */
+/* ===== データ ===== */
 const ITEMS = [
   { name:"えびフリッター", emoji:"🍤" },
   { name:"ローストポーク", emoji:"🍖" },
@@ -156,7 +152,7 @@ const FACE_MAP = {
 };
 const N = ITEMS.length, ARC = 360/N;
 
-/* =================== 状態 =================== */
+/* ===== 状態 ===== */
 let spinsLeft = 0, spinning = false, pointerAngle = 0;
 let results = [];
 const leftNum = document.getElementById('leftNum');
@@ -166,7 +162,7 @@ const faceImg = document.getElementById('faceImg');
 const setLeft = (n)=> leftNum.textContent = n;
 const showToast = (m)=>{ toast.textContent=m; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), 1200); };
 
-/* =================== Three.js =================== */
+/* ===== Three.js 基本 ===== */
 const stage = document.getElementById('stage');
 const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
@@ -177,26 +173,25 @@ let camera; const scene = new THREE.Scene();
 
 /* 盤（テクスチャ） */
 const loader = new THREE.TextureLoader();
-const tex = loader.load('roulette_ui_6_sections.png'); // 6分割PNG
+const tex = loader.load('roulette_ui_6_sections.png');
 tex.colorSpace = THREE.SRGBColorSpace;
 const wheel = new THREE.Mesh(new THREE.PlaneGeometry(1,1), new THREE.MeshBasicMaterial({ map:tex, transparent:true }));
 scene.add(wheel);
 
-/* 外周リム（発光気味） */
+/* 外周リム＋グロー */
 const rim = new THREE.Mesh(new THREE.RingGeometry(0.48, 0.52, 128),
-  new THREE.MeshBasicMaterial({ color:0xf3c24a, transparent:true, opacity:.95 }));
+  new THREE.MeshBasicMaterial({ color:0xf3c24a, transparent:true, opacity:.96 }));
 scene.add(rim);
-const rimGlow = new THREE.Mesh(new THREE.RingGeometry(0.52, 0.58, 128),
+const rimGlow = new THREE.Mesh(new THREE.RingGeometry(0.52, 0.585, 128),
   new THREE.MeshBasicMaterial({ color:0xf3c24a, transparent:true, opacity:.22 }));
 scene.add(rimGlow);
 
-/* ガラス光沢（斜めの白ハイライト） */
-const gloss = new THREE.Mesh(new THREE.PlaneGeometry(1,1),
+/* 光沢スイープ（回転させる） */
+const gloss = new THREE.Mesh(new THREE.RingGeometry(0.35, 0.58, 64, 1, 0, Math.PI/3),
   new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:.06 }));
-gloss.rotation.z = -15 * Math.PI/180;
 scene.add(gloss);
 
-/* 針（本体＋中心キャップ） */
+/* 針（本体＋ゴースト） */
 const pointerGroup = new THREE.Group(); scene.add(pointerGroup);
 function makePointer(){
   const s = 1;
@@ -206,67 +201,90 @@ function makePointer(){
   shape.lineTo( 0.12*s, -0.22*s);
   shape.lineTo(0, 0.20*s);
   const geom = new THREE.ShapeGeometry(shape);
-  const mat  = new THREE.MeshBasicMaterial({ color:0xff5a76 });
-  const mesh = new THREE.Mesh(geom, mat);
-  // エッジ光
+  const base = new THREE.Mesh(geom, new THREE.MeshBasicMaterial({ color:0xff5a76 }));
   const edge = new THREE.Mesh(new THREE.ShapeGeometry(shape),
     new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:.18 }));
   edge.scale.set(1.02,1.02,1);
-  // キャップ
   const cap = new THREE.Mesh(new THREE.CircleGeometry(0.06, 48),
     new THREE.MeshBasicMaterial({ color:0xf3c24a }));
-  cap.position.set(0, -0.18*s, 0.001);
-  const g = new THREE.Group(); g.add(mesh, edge, cap);
-  return g;
+  cap.position.set(0,-0.18*s,0.001);
+  const g=new THREE.Group(); g.add(base,edge,cap); return g;
 }
 const pointer = makePointer(); pointerGroup.add(pointer);
+const ghosts=[]; for(let i=0;i<4;i++){ const g=makePointer(); g.children.forEach(c=>c.material=c.material.clone()); g.children.forEach(c=>c.material.opacity=.08-i*0.015); ghosts.push(g); pointerGroup.add(g); }
 
-/* 針ゴースト（残像） */
-const ghostQty = 4; const ghosts = [];
-for(let i=0;i<ghostQty;i++){
-  const g = makePointer();
-  g.children.forEach(c=>c.material = c.material.clone());
-  g.children.forEach(c=>c.material.opacity = .08 - i*0.015);
-  ghosts.push(g); pointerGroup.add(g);
+/* LEDリング（64球） */
+const ledGroup = new THREE.Group(); scene.add(ledGroup);
+const LED_COUNT = 64;
+const leds = [];
+for(let i=0;i<LED_COUNT;i++){
+  const bulb = new THREE.Mesh(new THREE.CircleGeometry(0.012, 24),
+    new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:.2 }));
+  const glow = new THREE.Mesh(new THREE.CircleGeometry(0.03, 24),
+    new THREE.MeshBasicMaterial({ color:0xfff1b0, transparent:true, opacity:.08 }));
+  const g = new THREE.Group(); g.add(glow, bulb);
+  leds.push({g, bulb, glow, angle:(i/LED_COUNT)*Math.PI*2});
+  ledGroup.add(g);
 }
 
 /* フィット */
 function fit(){
-  const w = innerWidth, h = innerHeight;
+  const w=innerWidth, h=innerHeight;
   renderer.setSize(w,h);
   camera = new THREE.OrthographicCamera(-w/2, w/2, h/2, -h/2, -10, 10);
   camera.position.set(0,0,5); camera.lookAt(0,0,0);
 
-  const size = Math.min(w,h) * 0.86;
-  wheel.scale.set(size, size, 1);
-  rim.scale.set(size, size, 1); rimGlow.scale.set(size, size, 1);
-  gloss.scale.set(size, size, 1);
+  const size = Math.min(w,h)*0.86;
+  wheel.scale.set(size,size,1);
+  rim.scale.set(size,size,1); rimGlow.scale.set(size,size,1);
+  gloss.scale.set(size,size,1);
 
-  const ps = size * 0.22;
+  const ps=size*0.22;
+  [pointer,...ghosts].forEach(p=>{ p.scale.set(ps,ps,1); p.position.set(0,size*0.40,0); });
   pointerGroup.rotation.z = pointerAngle = 0;
-  [pointer, ...ghosts].forEach(p=>{
-    p.scale.set(ps, ps, 1);
-    p.position.set(0, size*0.40, 0);
+
+  // LED位置（外周ちょい外）
+  const r = 0.565*size;
+  leds.forEach(({g,angle})=>{
+    g.position.set(Math.cos(angle)*r, Math.sin(angle)*r, 0.002);
+    g.scale.set(size,size,1); // geometryは1基準なのでスケールで拡大
   });
+  ledGroup.scale.set(1,1,1);
 }
 addEventListener('resize', fit); fit();
 
-/* レンダリング */
+/* アニメーション */
+let ledPhase=0, ledSpeed=0.5, glossSpeed=0.15;
+let last=performance.now();
 function render(){
+  const now=performance.now(), dt=(now-last)/1000; last=now;
+
+  // LED 追いかけ点灯
+  ledPhase += ledSpeed*dt;
+  leds.forEach(({bulb,glow,angle})=>{
+    const k = 0.6 + 0.4*Math.cos(angle*4 - ledPhase*8); // 4群で波
+    bulb.material.opacity = 0.15 + 0.75*Math.max(0,k);
+    glow.material.opacity = 0.04 + 0.22*Math.max(0,k);
+    bulb.material.color.setHSL(0.12, 0.9, 0.55 + 0.2*k);
+    glow.material.color.setHSL(0.12, 1.0, 0.7);
+  });
+
+  // 光沢スイープ回転
+  gloss.rotation.z += glossSpeed*dt;
+
   renderer.render(scene, camera);
   requestAnimationFrame(render);
 }
 render();
 
-/* =================== Audio（BGM+SE） =================== */
+/* ===== Audio（BGM+SE） ===== */
 let audioCtx, master, loopTimer, muted=false, bgm;
 function ensureAudio(){
   if(audioCtx) return;
   audioCtx = new (window.AudioContext||window.webkitAudioContext)();
   master = audioCtx.createGain(); master.gain.value=.5; master.connect(audioCtx.destination);
-  // BGM（HTMLAudioで確実に）
-  bgm = new Audio();
-  bgm.src = "data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAA..."; // （短い無害ループ: 省略可）
+  bgm = new Audio(); // お好みのBGMに差替OK
+  bgm.src = "data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"; // 省略版
   bgm.loop = true; bgm.volume = 0.35;
 }
 function startSpinLoop(){
@@ -283,7 +301,7 @@ function startSpinLoop(){
       g.gain.exponentialRampToValueAtTime(0.0001,t+0.15);
       o.stop(t+0.16);
     });
-  }, 240);
+  }, 220);
 }
 function stopSpinLoop(){ if(loopTimer){ clearInterval(loopTimer); loopTimer=null; } }
 function playHitSFX(){
@@ -298,38 +316,40 @@ function playHitSFX(){
   o.stop(t+0.30);
 }
 
-/* =================== 紙吹雪 =================== */
-const fx = document.getElementById('fx'); const ctx = fx.getContext('2d');
-function resizeFX(){ fx.width = innerWidth*devicePixelRatio; fx.height = innerHeight*devicePixelRatio; ctx.scale(devicePixelRatio, devicePixelRatio); }
+/* ===== 紙吹雪 ===== */
+const fx = document.getElementById('fx'); const ctx2 = fx.getContext('2d');
+function resizeFX(){ fx.width=innerWidth*devicePixelRatio; fx.height=innerHeight*devicePixelRatio; ctx2.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); }
 resizeFX(); addEventListener('resize', resizeFX);
-let confs = [];
+let confs=[];
 function burst(){
-  const cx = innerWidth/2, cy = innerHeight*0.38;
-  for(let i=0;i<200;i++){
-    const a = Math.random()*Math.PI*2, sp = 2.2 + Math.random()*4;
-    confs.push({ x:cx, y:cy, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp-2, life:60+Math.random()*60,
-      col:`hsl(${20+Math.random()*50} 90% ${60+Math.random()*20}%)`, size:2+Math.random()*3 });
+  const cx=innerWidth/2, cy=innerHeight*0.38;
+  for(let i=0;i<220;i++){
+    const a=Math.random()*Math.PI*2, sp=2.2+Math.random()*4;
+    confs.push({x:cx,y:cy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:60+Math.random()*60,
+      col:`hsl(${20+Math.random()*50} 90% ${60+Math.random()*20}%)`,size:2+Math.random()*3});
   }
 }
 (function step(){
-  ctx.clearRect(0,0,innerWidth,innerHeight);
+  ctx2.clearRect(0,0,innerWidth,innerHeight);
   for(let i=confs.length-1;i>=0;i--){
-    const p = confs[i];
-    p.x+=p.vx; p.y+=p.vy; p.vy+=0.08; p.life--;
-    ctx.globalCompositeOperation="lighter";
-    ctx.fillStyle=p.col; ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
+    const p=confs[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.08; p.life--;
+    ctx2.globalCompositeOperation="lighter"; ctx2.fillStyle=p.col; ctx2.beginPath(); ctx2.arc(p.x,p.y,p.size,0,Math.PI*2); ctx2.fill();
     if(p.life<=0) confs.splice(i,1);
   }
   requestAnimationFrame(step);
 })();
 
-/* =================== 抽選＆スピン =================== */
+/* ===== 抽選＆スピン ===== */
 function pick(){ return Math.floor(Math.random()*N); }
 function faceFor(name){ return FACE_MODE==="random" ? FACES[Math.floor(Math.random()*FACES.length)] : (FACE_MAP[name]||"face.png"); }
 
 function spin(){
   if(spinning || spinsLeft<=0) return;
-  spinning = true; spinBtn.disabled = true; startSpinLoop();
+  spinning = true; spinBtn.disabled = true;
+
+  // LED/グロス高速化
+  ledSpeed = 4.5; glossSpeed = 0.9;
+  startSpinLoop();
 
   const idx = pick();
   const center = idx*ARC + ARC/2;
@@ -339,89 +359,83 @@ function spin(){
   const end = start + THREE.MathUtils.degToRad(deltaDeg);
   const dur = 5600; const t0 = performance.now();
 
-  const camBase = camera.position.clone();
+  function easeOutCubic(t){ return 1 - Math.pow(1-t, 3); }
+  function easeOutBack(t){ const c1=1.70158, c3=c1+1; return 1 + c3*Math.pow(t-1,3) + c1*Math.pow(t-1,2); }
 
-  function easeOutBack(t){ const c1=1.70158, c3=c1+1; return 1 + c3*Math.pow(t-1,3) + c1*Math.pow(t-1,2); } // 停止時に少し弾む
   function anim(now){
     const t = Math.min(1,(now-t0)/dur);
-    const k = t<1 ? (1 - Math.pow(1-t,3)) : 1; // outCubic
+    const k = easeOutCubic(t);
     pointerGroup.rotation.z = start + (end-start)*k;
 
-    // ゴースト追従
     ghosts.forEach((g,i)=> g.rotation.z = pointerGroup.rotation.z - 0.05*(i+1));
+    camera.rotation.z = (1-k) * CAMERA_TILT;
 
-    // 軽いカメラチルト
-    const tilt = (1-k) * CAMERA_TILT;
-    camera.rotation.z = tilt;
-
-    if(t<1) requestAnimationFrame(anim);
+    if(t<1){ requestAnimationFrame(anim); }
     else{
-      // 最終ちょい弾み
-      const t1 = performance.now(), d2=380, sAngle=pointerGroup.rotation.z;
+      // 仕上げのバウンド
+      const t1=performance.now(), d2=380, sAngle=pointerGroup.rotation.z;
       (function back(now2){
         const tt = Math.min(1,(now2-t1)/d2);
         const kk = easeOutBack(tt);
         pointerGroup.rotation.z = sAngle + (end - sAngle)*kk;
-        if(tt<1) requestAnimationFrame(back);
-        else finish();
+        if(tt<1) requestAnimationFrame(back); else finish();
       })(t1+16);
     }
   }
   requestAnimationFrame(anim);
 
   function finish(){
-    pointerAngle = end; stopSpinLoop(); camera.rotation.z = 0;
+    pointerAngle = end; stopSpinLoop(); camera.rotation.z=0;
+
+    // LEDバースト→アイドル戻し
+    let burstT=0; const burstId=setInterval(()=>{ burstT+=1; ledSpeed = 10 - burstT*1.2; if(ledSpeed<=0.6){ ledSpeed=0.6; clearInterval(burstId);} }, 90);
+    glossSpeed = 0.15;
 
     const it = ITEMS[idx];
     results.push({ idx, name: it.name, emoji: it.emoji });
 
-    // 演出
     faceImg.src = faceFor(it.name);
-    faceOverlay.style.display = 'grid';
+    faceOverlay.style.display='grid';
     playHitSFX(); burst();
     showToast(`${it.emoji} ${it.name}！`);
-    setTimeout(()=>{ faceOverlay.style.display = 'none'; }, FACE_SHOW_MS);
+    setTimeout(()=>{ faceOverlay.style.display='none'; }, FACE_SHOW_MS);
 
     spinsLeft -= 1; setLeft(spinsLeft);
-    spinning = false; spinBtn.disabled = (spinsLeft<=0);
+    spinning=false; spinBtn.disabled=(spinsLeft<=0);
     if(spinsLeft<=0) showSummary();
   }
 }
 
-/* =================== サマリー =================== */
+/* ===== サマリー ===== */
 function showSummary(){
-  const map = new Map();
-  results.forEach(r=> map.set(r.name, (map.get(r.name)||0)+1));
-  const rows = [...map.entries()]
-    .map(([name,c])=>`<tr><td>${name}</td><td style="text-align:right">${c}</td></tr>`)
-    .join('');
+  const map=new Map(); results.forEach(r=> map.set(r.name,(map.get(r.name)||0)+1));
+  const rows=[...map.entries()].map(([n,c])=>`<tr><td>${n}</td><td style="text-align:right">${c}</td></tr>`).join('');
   document.getElementById('list').innerHTML =
     `<table><thead><tr><th>メニュー</th><th style="text-align:right">数量</th></tr></thead><tbody>${rows||'<tr><td colspan="2">なし</td></tr>'}</tbody></table>`;
   document.getElementById('summary').style.display='block';
 }
 
-/* =================== UI配線 =================== */
+/* ===== UI配線 ===== */
 const spinBtn = document.getElementById('spin');
 spinBtn.addEventListener('click', spin);
 
 document.getElementById('reset').addEventListener('click', ()=>{
   stopSpinLoop(); results=[]; spinsLeft=0; setLeft('--');
   document.getElementById('summary').style.display='none';
-  spinBtn.disabled=false; pointerGroup.rotation.z = pointerAngle = 0;
+  spinBtn.disabled=false; pointerGroup.rotation.z=pointerAngle=0;
+  ledSpeed=0.5; glossSpeed=0.15;
   document.getElementById('start').style.display='grid';
 });
 
 document.getElementById('mute').addEventListener('click', ()=>{
-  muted=!muted;
-  document.getElementById('mute').classList.toggle('muted', muted);
+  muted=!muted; document.getElementById('mute').classList.toggle('muted', muted);
   showToast(muted?'ミュート':'サウンドON');
-  try{ if(bgm){ muted ? bgm.pause() : bgm.play(); } }catch(e){}
+  try{ ensureAudio(); if(bgm){ muted?bgm.pause():bgm.play(); } }catch(e){}
 });
 
 document.getElementById('startBtn').addEventListener('click', ()=>{
   const p = Math.max(1, Math.floor(Number(document.getElementById('people').value)||0));
   spinsLeft = p*2; setLeft(spinsLeft); results=[]; document.getElementById('start').style.display='none';
-  // Audio初期化＆BGM開始
   try{ ensureAudio(); bgm && bgm.play(); }catch(e){}
   showToast(`人数 ${p}人 / 合計 ${spinsLeft}回`);
 });

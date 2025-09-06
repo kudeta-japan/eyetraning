@@ -124,18 +124,33 @@ const table = new THREE.Mesh(
 );
 table.position.y = -0.35; scene.add(table);
 
-/* ====== ルーレット（固定PNGテクスチャ） ====== */
-const wheelGroup = new THREE.Group(); scene.add(wheelGroup);
+/* ルーレット：上面テクスチャ（Circle）＋縁（Torus） */
+const wheelGroup = new THREE.Group(); 
+scene.add(wheelGroup);
+
 const loader = new THREE.TextureLoader();
-
-const wheelTex = loader.load("roulette_ui_6_sections.png");
-wheelTex.anisotropy = 8; wheelTex.encoding = THREE.sRGBEncoding;
-
 const disc = new THREE.Mesh(
   new THREE.CircleGeometry(3.2, 256),
-  new THREE.MeshStandardMaterial({ map: wheelTex, metalness:.05, roughness:.55 })
+  new THREE.MeshStandardMaterial({ color: 0xffffff, metalness:.05, roughness:.55 })
 );
-disc.rotation.x = -0.28; wheelGroup.add(disc);
+disc.rotation.x = -0.28;
+wheelGroup.add(disc);
+
+// テクスチャを読み込み（ログ出力付き）
+loader.load(
+  "./roulette_ui_6_sections.png",
+  (tex) => {
+    tex.anisotropy = 8;
+    // tex.encoding = THREE.sRGBEncoding; // 必要なら有効化
+    disc.material.map = tex;
+    disc.material.needsUpdate = true;
+    console.log("✅ Texture loaded:", tex);
+  },
+  undefined,
+  (err) => {
+    console.error("❌ Texture load error:", err);
+  }
+);
 
 const rim = new THREE.Mesh(
   new THREE.TorusGeometry(3.22, 0.14, 32, 128),

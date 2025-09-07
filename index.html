@@ -233,11 +233,6 @@ pointerBody.add(gem);
 pointerBody.add(glowTip, glowBody);
 
 // サイズと位置調整
-const ps = size * 0.22;
-pointerGroup.scale.set(ps, ps, ps);
-pointerGroup.position.set(0, 0, 0);              // ← 中心は原点のまま
-const offset = size * 0.40 / ps;                 // ← 内側の見た目だけ上へ
-pointerBody.position.set(0, offset, 0);
 
 pointerGroup.rotation.z = pointerAngle = 0;      // ← 盤の中心を軸に回転できる
 function arrowShape(){
@@ -284,6 +279,13 @@ function fit(){
 
   const size = Math.min(w,h) * 0.86;         // 盤サイズ
   wheel.scale.set(size, size, 1);
+  // 盤のサイズに追従して針を配置（中心回転＋見た目だけ上に）
+const ps = size * 0.22;
+pointerGroup.scale.set(ps, ps, ps);
+pointerGroup.position.set(0, 0, 0);      // 回転中心は原点
+const offset = size * 0.40 / ps;         // 見た目の位置だけ上へ
+pointerBody.position.set(0, offset, 0);
+pointerGroup.rotation.z = pointerAngle = 0;
 
 }
 addEventListener('resize', fit); fit();

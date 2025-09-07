@@ -219,7 +219,27 @@ const wheel = new THREE.Mesh(new THREE.PlaneGeometry(1,1), new THREE.MeshBasicMa
 scene.add(wheel);
 
 /* ── 針（豪華版） ── */
-const pointerGroup = new THREE.Group(); scene.add(pointerGroup);
+// グループを2階層に分ける
+const pointerGroup = new THREE.Group(); // 回転用（常に盤の中心＝原点）
+scene.add(pointerGroup);
+
+const pointerBody = new THREE.Group();  // 見た目用
+pointerGroup.add(pointerBody);
+
+// rim, core, gem, glowTip などは pointerBody.add()
+pointerBody.add(rim);
+pointerBody.add(core);
+pointerBody.add(gem);
+pointerBody.add(glowTip, glowBody);
+
+// サイズと位置調整
+const ps = size * 0.22;
+pointerGroup.scale.set(ps, ps, ps);
+pointerGroup.position.set(0, 0, 0);              // ← 中心は原点のまま
+const offset = size * 0.40 / ps;                 // ← 内側の見た目だけ上へ
+pointerBody.position.set(0, offset, 0);
+
+pointerGroup.rotation.z = pointerAngle = 0;      // ← 盤の中心を軸に回転できる
 function arrowShape(){
   const s=1,w=0.16*s,h=0.22*s,tail=0.14*s;
   const sh=new THREE.Shape();
@@ -265,13 +285,6 @@ function fit(){
   const size = Math.min(w,h) * 0.86;         // 盤サイズ
   wheel.scale.set(size, size, 1);
 
-  // 針：盤サイズから自動算出（位置も外周近くに）
-  const ps = size * 0.22;
-  pointerGroup.scale.set(ps, ps, ps);
-  pointerGroup.position.set(0, size*0.40, 0);
-
-  // 初期姿勢
-  pointerGroup.rotation.z = pointerAngle = 0;
 }
 addEventListener('resize', fit); fit();
 

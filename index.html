@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Cheese Wonderland — Fullscreen Roulette (Stop Button + LED)</title>
+<title>Cheese Wonderland — Fullscreen Roulette (Stop + LED outer + Smooth stop)</title>
 <style>
   :root{
     --bg:#080b14; --ink:#eef2ff; --panel:#0e1330;
@@ -51,9 +51,9 @@
   #summary th{text-align:left;color:#aeb8ff}
   #summary tr:last-child td{border-bottom:none}
 
-  /* LED リム */
+  /* LED リム（DOM） */
   #ledRing{position:fixed;inset:0;pointer-events:none;display:grid;place-items:center;z-index:10}
-  #ledRing .ring{position:relative; width:min(78vmin,900px); aspect-ratio:1/1;}
+  #ledRing .ring{position:relative; width:min(80vmin,980px); aspect-ratio:1/1;} /* ほんの少し大きめに */
   #ledRing .ring .bulb{position:absolute; width:1.8%; aspect-ratio:1/1; border-radius:50%;
     background:radial-gradient(circle at 30% 30%, #fff8, #fff0 45%), radial-gradient(circle, #fbe6a4 0, #caa24a 60%, #7a5b1b 100%);
     box-shadow:0 0 8px rgba(243,200,98,.55); filter:brightness(.9)}
@@ -112,13 +112,11 @@ const SECTOR = 60; // 1区画60°
 const deg = d => THREE.MathUtils.degToRad(d);
 const radToDeg = r => THREE.MathUtils.radToDeg(r);
 const norm = a => THREE.MathUtils.euclideanModulo(a, TAU);
-
-/* 時計角（0=12時 時計回り+）⇔ 数学角（0=3時 反時計回り+）変換 */
+/* 時計角（0=12時 時計回り+）⇔ 数学角（0=3時 反時計回り+） */
 function toClockDeg(mathDeg){ return (90 - mathDeg + 360) % 360; }
 function toMathDeg(clockDeg){ return (90 - clockDeg + 360) % 360; }
 
 /* ========== データ ========== */
-/* セクター割り当て（時計角中心） */
 const ITEMS = [
   { name:"牛コロカツ",     emoji:"🥩", centerClock:  60 },
   { name:"えびフリッター", emoji:"🍤", centerClock: 120 },
@@ -138,7 +136,7 @@ const FACE_MAP = {
 };
 
 /* ========== 状態とDOM ========== */
-let spinsLeft = 0, spinning = false, pointerAngle = 0; // pointerAngle: 数学角（rad）
+let spinsLeft = 0, spinning = false, pointerAngle = 0; // 針 数学角(rad)
 let results = [];
 const leftNum = document.getElementById('leftNum');
 const toast = document.getElementById('toast');
@@ -147,7 +145,9 @@ const faceImg = document.getElementById('faceImg');
 const setLeft = (n)=> leftNum.textContent = n;
 const showToast = (m)=>{ toast.textContent=m; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), 1100); };
 
-/* ========== LED リム生成 ========== */
+/* ========== LED リム生成（半径を少し外へ） ========== */
+/* 画面サイズに対して相対：中心からの半径%（既定 46% → 49.5% に拡大） */
+const LED_RADIUS_PCT = 49.5; // 必要なら 48〜50 に微調整すると “+1cm 相当” を追い込めます
 const ledBulbs = [];
 (function makeLED(){
   const ring = document.getElementById('ring');
@@ -155,9 +155,9 @@ const ledBulbs = [];
   for(let i=0;i<bulbs;i++){
     const b = document.createElement('div');
     b.className = 'bulb';
-    const aMath = i/bulbs * 360;                // 数学角（0=右）
-    b.style.left = 50 + 46 * Math.cos(deg(aMath)) + '%';
-    b.style.top  = 50 + 46 * Math.sin(deg(aMath)) + '%';
+    const aMath = i/bulbs * 360; // 数学角（0=右）
+    b.style.left = 50 + LED_RADIUS_PCT * Math.cos(deg(aMath)) / 100 * 100 + '%';
+    b.style.top  = 50 + LED_RADIUS_PCT * Math.sin(deg(aMath)) / 100 * 100 + '%';
     ring.appendChild(b);
     ledBulbs.push({el:b, aMath});
   }
@@ -173,7 +173,7 @@ function setLEDSpin(speed){ ledState='spin'; ledSpeed = 4 * Math.min(1, speed); 
 function setLEDWin(centerClock){
   ledState='win';
   highlightSectorClock(centerClock, 30);
-  setTimeout(()=>{ setLEDIdle(); }, 1200);
+  setTimeout(()=>{ setLEDIdle(); }, 1400);
 }
 
 function highlightNone(){
@@ -184,8 +184,7 @@ function highlightSectorClock(centerClock, half){
   const minC = (centerClock - half + 360) % 360;
   const maxC = (centerClock + half + 360) % 360;
   ledBulbs.forEach(({el, aMath})=>{
-    // LED配置は数学角なので時計角へ変換して比較
-    const aClock = (90 - aMath + 360) % 360;
+    const aClock = (90 - aMath + 360) % 360; // 数学角→時計角
     const inArc = (minC<maxC) ? (aClock>=minC && aClock<=maxC)
                               : (aClock>=minC || aClock<=maxC);
     el.style.boxShadow = inArc
@@ -219,7 +218,7 @@ let camera;
 const scene = new THREE.Scene();
 
 const loader = new THREE.TextureLoader();
-const tex = loader.load('roulette_ui_6_sections.png'); // 6分割PNG
+const tex = loader.load('roulette_ui_6_sections.png');
 tex.colorSpace = THREE.SRGBColorSpace;
 const wheel = new THREE.Mesh(new THREE.PlaneGeometry(1,1), new THREE.MeshBasicMaterial({ map:tex, transparent:true }));
 scene.add(wheel);
@@ -307,12 +306,10 @@ function playHitSFX(){
 }
 
 /* ========== 角度→アイテム判定（時計角） ========== */
-// 針の数学角rad → 時計角deg
 function clockDegFromRad(rad){
   const mathDeg = (radToDeg(rad) % 360 + 360) % 360;
   return (90 - mathDeg + 360) % 360;
 }
-// 時計角でセクター判定
 function itemIdxByClockDeg(d){
   const a = ((d % 360) + 360) % 360;
   if (a >= 30  && a < 90 ) return 0; // 牛
@@ -322,25 +319,25 @@ function itemIdxByClockDeg(d){
   if (a >= 270 && a < 330) return 4; // バゲット
   return 5;                           // 野菜（330–360 or 0–30）
 }
-// 現在針角からアイテムindex
 function idxByAngleRad(rad){ return itemIdxByClockDeg(clockDegFromRad(rad)); }
-// アイテムindex → 目標数学角（針を止める中心角）
 function targetAngleForIdx(idx){
   const clockCenter = ITEMS[idx].centerClock;
   const mathCenter = toMathDeg(clockCenter);
   return deg(mathCenter);
 }
+function faceFor(name){ return FACE_MAP[name] || "face.png"; }
 
-/* ========== 針スピン（回す/止める） ========== */
+/* ========== 針スピン（回す/止める：スムース停止版） ========== */
 let omega = 0;              // 角速度（rad/s）
-let spinMode = 'idle';      // 'idle' | 'spin' | 'stopping'
+let spinMode = 'idle';      // 'idle' | 'spin' | 'stoppingTween'
 const OMEGA_MAX = 10;       // 最高速（調整可）
 const ACCEL     = 16;       // 加速度
-const DECEL     = 12;       // 減速度
-let targetEndAngle = null;  // 停止ターゲット（数学角rad）
 
-function pick(){ return Math.floor(Math.random()*ITEMS.length); }
-function faceFor(name){ return FACE_MAP[name] || "face.png"; }
+// 停止トゥイーン用
+let stopStartAngle = 0;
+let stopTargetAngle = 0;
+let stopElapsed = 0;
+let stopDuration = 2.8;     // 秒（ゆっくり止まる）
 
 function startSpin(){
   if(spinning || spinsLeft<=0) return;
@@ -351,23 +348,25 @@ function startSpin(){
   ensureAudio(); ensureAudio.startBGM?.();
   startSpinLoop();
 
-  spinMode='spin'; targetEndAngle=null;
+  spinMode='spin';
   omega = 0.0001;
   setLEDSpin(0.2);
 }
 
 function pressStop(){
   if(spinMode!=='spin') return;
-  spinMode='stopping';
+  spinMode='stoppingTween';
   stopSpinLoop();
 
+  // 今の角度から「指している区画の中心」へ、時間ベースの減速で着地
   const nowA = norm(pointerGroup.rotation.z);
-  const idx  = idxByAngleRad(nowA);            // いま指している区画
-  const tgt  = targetAngleForIdx(idx);         // その区画の中心（数学角rad）
-  const laps = 4 + Math.floor(Math.random()*3); // 4〜6周して自然に止まる
-  // 最短差で着地（ズレなし）
-  const delta = shortestDelta(nowA, tgt);
-  targetEndAngle = nowA + laps*TAU + delta;
+  const idx  = idxByAngleRad(nowA);
+  const tgt  = targetAngleForIdx(idx);
+  const laps = 4 + Math.floor(Math.random()*3); // 4〜6周で自然
+  stopStartAngle  = nowA;
+  stopTargetAngle = nowA + laps*TAU + shortestDelta(nowA, tgt);
+  stopElapsed = 0;
+  stopDuration = 3.0; // さらにゆっくりにしたければ 3.2〜3.6 に
 }
 
 function shortestDelta(from, to){
@@ -378,7 +377,7 @@ function shortestDelta(from, to){
 }
 
 function finishStop(){
-  pointerGroup.rotation.z = norm(targetEndAngle);
+  pointerGroup.rotation.z = norm(stopTargetAngle);
   pointerAngle = pointerGroup.rotation.z;
   spinMode='idle'; omega=0; setLEDIdle();
 
@@ -389,7 +388,7 @@ function finishStop(){
   faceImg.src = faceFor(it.name);
   faceOverlay.style.display = 'grid';
   playHitSFX(); showToast(`${it.emoji} ${it.name}！`);
-  setLEDWin(ITEMS[idx].centerClock);     // 時計角の中心をハイライト
+  setLEDWin(ITEMS[idx].centerClock);
   setTimeout(()=>{ faceOverlay.style.display='none'; }, 1700);
 
   spinsLeft -= 1; setLeft(spinsLeft);
@@ -411,16 +410,18 @@ function stepSpin(dt){
     return;
   }
 
-  if(spinMode==='stopping'){
-    const cur = pointerGroup.rotation.z;
-    const remain = shortestDelta(cur, targetEndAngle);
-    const brake = Math.max(4, DECEL) * (1 + 2*Math.min(1, Math.abs(remain)/(Math.PI/2)));
-    omega = Math.max(0.9, omega - brake*dt);
-    const step = Math.sign(remain) * Math.min(Math.abs(remain), omega*dt);
-    pointerGroup.rotation.z = norm(cur + step);
-    setLEDSpin(omega/OMEGA_MAX);
+  if(spinMode==='stoppingTween'){
+    // 時間ベースのスムース減速（イージングでゆっくり止まる）
+    stopElapsed += dt;
+    const t = Math.min(1, stopElapsed / stopDuration);
+    const ease = 1 - Math.pow(1 - t, 3);  // easeOutCubic
+    const total = stopTargetAngle - stopStartAngle; // 連続空間でOK（targetはすでに周回込み）
+    pointerGroup.rotation.z = norm(stopStartAngle + total * ease);
 
-    if (Math.abs(shortestDelta(pointerGroup.rotation.z, targetEndAngle)) < deg(0.4) && omega < 1.2){
+    // LED も速度感をだんだん落とす
+    setLEDSpin(1 - t * 0.95);
+
+    if (t >= 1){
       finishStop();
     }
   }
@@ -462,7 +463,7 @@ document.getElementById('reset').addEventListener('click', ()=>{
   document.getElementById('spin').disabled=false;
   document.getElementById('stop').disabled=true;
   pointerGroup.rotation.z = pointerAngle = 0;
-  spinMode='idle'; omega=0; setLEDIdle();
+  spinMode='idle'; setLEDIdle();
   document.getElementById('start').style.display='grid';
 });
 document.getElementById('mute').addEventListener('click', ()=>{

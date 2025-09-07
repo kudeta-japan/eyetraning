@@ -3,134 +3,115 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Cheese Wonderland — Fullscreen Roulette</title>
+<title>Cheese Wonderland — Stop-to-Decelerate Roulette</title>
 <style>
-  :root{
-    --bg:#080b14; --ink:#eef2ff; --panel:#0e1330;
-    --gold:#f3c862; --gold2:#a37b2e; --accent:#ff5a76;
-  }
+  :root{ --bg:#080b14; --ink:#eef2ff; --panel:#0e1330; --accent:#ff5a76 }
   html,body{height:100%;margin:0;background:radial-gradient(1000px 700px at 70% -10%, rgba(255,255,255,.06), transparent 60%), var(--bg); color:var(--ink); font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,"Noto Sans JP"; overflow:hidden}
   #stage{position:fixed;inset:0}
 
-  /* 残り回数 */
-  #leftBadge{position:fixed;left:10px;top:10px;z-index:20;background:rgba(20,24,40,.7);
-    border:1px solid rgba(255,255,255,.1);padding:8px 12px;border-radius:10px;font-weight:800;backdrop-filter: blur(4px)}
-
-  /* ボタン */
-  #controls{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:14px;z-index:20}
-  button{appearance:none;border:none;border-radius:14px;padding:14px 22px;font-size:18px;font-weight:900;cursor:pointer;
-    background:linear-gradient(180deg,#ffe08a,#f7b733);color:#141414;box-shadow:0 10px 28px rgba(0,0,0,.45)}
-  button.ghost{background:#1c2342;color:#e9ecff;border:1px solid rgba(255,255,255,.14);box-shadow:none}
-  button:disabled{opacity:.5;cursor:not-allowed}
-  #mute{width:46px;padding:12px 0}
-
-  /* 当たりトースト */
+  /* HUD */
+  #leftBadge{position:fixed;left:10px;top:10px;z-index:20;background:rgba(20,24,40,.72);
+    border:1px solid rgba(255,255,255,.12);padding:8px 12px;border-radius:10px;font-weight:800;backdrop-filter:blur(6px)}
   #toast{position:fixed;left:50%;top:16px;transform:translateX(-50%) translateY(-16px);background:#111533;
-    border:1px solid rgba(255,255,255,.18);padding:10px 14px;border-radius:12px;font-weight:800;opacity:0;
-    transition:.25s;z-index:30}
+    border:1px solid rgba(255,255,255,.18);padding:10px 14px;border-radius:12px;font-weight:800;opacity:0;transition:.25s;z-index:30}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-  /* 人数モーダル */
+  /* Controls */
+  #controls{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:12px;z-index:20}
+  button{appearance:none;border:none;border-radius:14px;padding:14px 20px;font-size:18px;font-weight:900;cursor:pointer}
+  .cta{background:linear-gradient(180deg,#ffe08a,#f7b733);color:#151515;box-shadow:0 10px 28px rgba(0,0,0,.4)}
+  .ghost{background:#1c2342;color:#e9ecff;border:1px solid rgba(255,255,255,.16)}
+  button:disabled{opacity:.55;cursor:not-allowed}
+
+  /* Start modal */
   #start{position:fixed;inset:0;display:grid;place-items:center;background:rgba(5,8,16,.92);z-index:40}
   #start .card{background:linear-gradient(180deg,#161c33,#0f1330);border:1px solid rgba(255,255,255,.12);border-radius:16px;
-    padding:20px;width:min(92vw,480px);box-shadow:0 24px 60px rgba(0,0,0,.6)}
+    padding:20px;width:min(92vw,420px);box-shadow:0 24px 60px rgba(0,0,0,.6)}
   #start .row{display:flex;gap:10px;align-items:center}
   #start input[type=number]{flex:1;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.15);
     background:#0c1126;color:#fff;font-size:18px}
 
-  /* 顔オーバーレイ */
+  /* Face overlay */
   #faceOverlay{position:fixed;inset:0;display:none;place-items:center;background:radial-gradient(600px 420px at 50% 40%,rgba(255,255,255,.06),transparent 60%);z-index:35;pointer-events:none}
   #faceOverlay img{max-width:62vw;max-height:62vh;border-radius:16px;box-shadow:0 18px 60px rgba(0,0,0,.55);animation:pop .5s ease both}
   @keyframes pop{0%{transform:scale(.86);opacity:0}100%{transform:scale(1);opacity:1}}
 
-  /* サマリー */
+  /* Summary */
   #summary{position:fixed;inset:0;display:none;background:rgba(0,0,0,.92);z-index:50;color:#fff}
   #summary .wrap{max-width:980px;margin:60px auto;padding:0 16px}
   #summary table{width:100%;border-collapse:collapse;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden}
   #summary th,#summary td{padding:10px;border-bottom:1px solid rgba(255,255,255,.08)}
   #summary th{text-align:left;color:#aeb8ff}
   #summary tr:last-child td{border-bottom:none}
-
-  /* LED リム（CSSだけで演出） */
-  #ledRing{position:fixed;inset:0;pointer-events:none;display:grid;place-items:center;z-index:10}
-  #ledRing .ring{position:relative; width:min(78vmin,900px); aspect-ratio:1/1;}
-  #ledRing .ring .bulb{position:absolute; width:1.8%; aspect-ratio:1/1; border-radius:50%;
-    background:radial-gradient(circle at 30% 30%, #fff8, #fff0 45%), radial-gradient(circle, #fbe6a4 0, #caa24a 60%, #7a5b1b 100%);
-    box-shadow:0 0 8px rgba(243,200,98,.55);}
-  /* 64等配 */
-  /* 生成は JS で配置 & 点滅アニメ付与 */
-  .blink{animation:blink 1.2s linear infinite}
-  @keyframes blink{0%,100%{filter:brightness(.8)} 50%{filter:brightness(1.5)}}
 </style>
 </head>
 <body>
 <div id="stage"></div>
 
-<!-- LED Rim -->
-<div id="ledRing"><div class="ring" id="ring"></div></div>
-
 <div id="leftBadge">残り <b id="leftNum">--</b> 回</div>
 
 <div id="controls">
-  <button id="spin">回す 🎡</button>
-  <button id="mute" class="ghost" title="ミュート切替">🔈</button>
+  <button id="spin" class="cta">回す 🎡</button>
+  <button id="stop" class="ghost" disabled>ストップ ✋</button>
   <button id="reset" class="ghost">リセット 🔄</button>
 </div>
 
 <div id="toast">当たり！</div>
 
-<!-- 人数入力 -->
+<!-- Start -->
 <div id="start">
   <div class="card">
     <h2 style="margin:0 0 10px">人数を入力してください</h2>
     <div class="row">
       <input type="number" id="people" min="1" step="1" value="2">
-      <button id="startBtn">開始</button>
+      <button id="startBtn" class="cta">開始</button>
     </div>
     <div style="opacity:.7;margin-top:10px">※ 1人2回プレイ</div>
   </div>
 </div>
 
-<!-- 顔オーバーレイ -->
+<!-- Face -->
 <div id="faceOverlay"><img id="faceImg" alt=""></div>
 
-<!-- 結果サマリー -->
+<!-- Summary -->
 <div id="summary">
   <div class="wrap">
     <h2>結果まとめ</h2>
     <div id="list"></div>
     <div style="margin-top:14px;display:flex;gap:10px">
-      <button id="again">もう一度</button>
+      <button id="again" class="cta">もう一度</button>
       <button id="closeSummary" class="ghost">閉じる</button>
     </div>
   </div>
 </div>
 
-<!-- three.js（非moduleで確実動作） -->
+<!-- three.js -->
 <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
 <script>
-/* ================= 基本設定 ================= */
-const FACE_SHOW_MS = 1700;              // 表情表示の長さ
-const FACE_MODE = "map";                // "map" 固定 / "random" ランダム
-const TAU = Math.PI * 2;
-const SECTOR = 60;                      // 1区画60°
+/* ===== 基本設定 ===== */
+const FACE_SHOW_MS = 1700;
+const TAU = Math.PI*2;
 const deg = d => THREE.MathUtils.degToRad(d);
+const rad = r => THREE.MathUtils.radToDeg(r);
 const norm = a => THREE.MathUtils.euclideanModulo(a, TAU);
-const shortestDelta = (from, to) => {
-  let d = norm(to) - norm(from);
-  if (d > Math.PI) d -= TAU;
-  if (d < -Math.PI) d += TAU;
-  return d;
-};
+const shortestDelta = (from, to)=>{ let d = norm(to)-norm(from); if(d>Math.PI) d-=TAU; if(d<-Math.PI) d+=TAU; return d; };
 
-/* ================= データ ================= */
+/* ===== セクター定義（ご指定どおり） =====
+  30–90: 牛コロカツ (center 60)
+  90–150: えびフリッター (120)
+  150–210: ローストポーク (180)
+  210–270: フライドチキン (240)
+  270–330: バゲット (300)
+  330–30: 野菜盛り合わせ (0)
+  針の0radは「真上=90°」なので、pointerAngle(ラジアン)→画面の角度は (90°+pointerAngle)。
+*/
 const ITEMS = [
-  { name:"牛コロカツ",     emoji:"🥩", centerDeg:  60 },
-  { name:"えびフリッター", emoji:"🍤", centerDeg: 120 },
-  { name:"ローストポーク", emoji:"🍖", centerDeg: 180 },
-  { name:"フライドチキン", emoji:"🍗", centerDeg: 240 },
-  { name:"バゲット",       emoji:"🥖", centerDeg: 300 },
-  { name:"野菜盛り合わせ", emoji:"🥦", centerDeg:   0 },
+  { name:"牛コロカツ",     emoji:"🥩", centerDeg:  60, range:[30,90] },
+  { name:"えびフリッター", emoji:"🍤", centerDeg: 120, range:[90,150] },
+  { name:"ローストポーク", emoji:"🍖", centerDeg: 180, range:[150,210] },
+  { name:"フライドチキン", emoji:"🍗", centerDeg: 240, range:[210,270] },
+  { name:"バゲット",       emoji:"🥖", centerDeg: 300, range:[270,330] },
+  { name:"野菜盛り合わせ", emoji:"🥦", centerDeg:   0, range:[330,30] }, // wrap
 ];
 const FACES = ["face.png","suprised.png","happy.png","laugh.png","funny.png"];
 const FACE_MAP = {
@@ -141,213 +122,201 @@ const FACE_MAP = {
   "バゲット":"face.png",
   "野菜盛り合わせ":"happy.png",
 };
+const SECTOR = 60;
 
-/* ================= 状態とDOM ================= */
-let spinsLeft = 0, spinning = false, pointerAngle = 0;
-let results = [];
+/* ===== 状態とDOM ===== */
+let spinsLeft=0, results=[], spinning=false, deceling=false;
+let pointerAngle=0;      // 針の現在角 (rad)
+let spinSpeed=0;         // 等速回転の角速度 (rad/s)
+let lockedIdx=null;      // STOP押下で確定したインデックス
+
 const leftNum = document.getElementById('leftNum');
+const setLeft = n => leftNum.textContent = n;
 const toast = document.getElementById('toast');
+const showToast = m => { toast.textContent=m; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), 1100); };
 const faceOverlay = document.getElementById('faceOverlay');
 const faceImg = document.getElementById('faceImg');
-const setLeft = (n)=> leftNum.textContent = n;
-const showToast = (m)=>{ toast.textContent=m; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), 1100); };
 
-/* ================= LED Rim 生成 ================= */
-(function makeLED(){
-  const ring = document.getElementById('ring');
-  const bulbs = 64;
-  for(let i=0;i<bulbs;i++){
-    const b = document.createElement('div');
-    b.className = 'bulb blink';
-    const a = i/bulbs * 360;
-    b.style.left = 50 + 46 * Math.cos(deg(a)) + '%';
-    b.style.top  = 50 + 46 * Math.sin(deg(a)) + '%';
-    b.style.animationDelay = `${(i%8)*0.08}s`;
-    ring.appendChild(b);
-  }
-})();
+const btnSpin = document.getElementById('spin');
+const btnStop = document.getElementById('stop');
+const btnReset = document.getElementById('reset');
 
-/* ================= Three.js セットアップ ================= */
+/* ===== Three.js ===== */
 const stage = document.getElementById('stage');
 const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.setSize(innerWidth, innerHeight);
 stage.appendChild(renderer.domElement);
 
-let camera;
-const scene = new THREE.Scene();
+let camera; const scene = new THREE.Scene();
 
 const loader = new THREE.TextureLoader();
-const tex = loader.load('roulette_ui_6_sections.png'); // 6分割PNG
+const tex = loader.load('roulette_ui_6_sections.png'); // 盤PNG
 tex.colorSpace = THREE.SRGBColorSpace;
+
 const wheel = new THREE.Mesh(new THREE.PlaneGeometry(1,1), new THREE.MeshBasicMaterial({ map:tex, transparent:true }));
 scene.add(wheel);
 
-// 針（三角形）
+// 針（上向き三角）
 const pointerGroup = new THREE.Group(); scene.add(pointerGroup);
-const shape = new THREE.Shape();
-shape.moveTo(0, 0.18);
-shape.lineTo(-0.12, -0.18);
-shape.lineTo( 0.12, -0.18);
-shape.lineTo(0, 0.18);
-const pointer = new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshBasicMaterial({ color:0xff5a76 }));
+const shp = new THREE.Shape(); shp.moveTo(0,0.18); shp.lineTo(-0.12,-0.18); shp.lineTo(0.12,-0.18); shp.lineTo(0,0.18);
+const pointer = new THREE.Mesh(new THREE.ShapeGeometry(shp), new THREE.MeshBasicMaterial({ color:0xff5a76 }));
 pointerGroup.add(pointer);
 
 function fit(){
-  const w = innerWidth, h = innerHeight;
+  const w=innerWidth, h=innerHeight;
   renderer.setSize(w,h);
-  camera = new THREE.OrthographicCamera(-w/2, w/2, h/2, -h/2, -10, 10);
+  camera = new THREE.OrthographicCamera(-w/2,w/2,h/2,-h/2,-10,10);
   camera.position.set(0,0,5); camera.lookAt(0,0,0);
-  const size = Math.min(w,h) * 0.86;
-  wheel.scale.set(size, size, 1);
-  const ps = size * 0.22;
-  pointer.scale.set(ps, ps, 1);
-  pointer.position.set(0, size*0.40, 0);
+  const size = Math.min(w,h)*0.86;
+  wheel.scale.set(size,size,1);
+  const ps=size*0.22;
+  pointer.scale.set(ps,ps,1);
+  pointer.position.set(0,size*0.40,0);
   pointerGroup.rotation.z = pointerAngle = 0;
 }
 addEventListener('resize', fit); fit();
 
-/* ================= レンダリング ================= */
-function render(){
+/* ===== 角度→アイテム判定 ===== */
+function getItemByAngleDeg(aDeg){
+  const a = (aDeg%360+360)%360;
+  if(a>=30 && a<90)   return 0;     // 牛コロカツ
+  if(a>=90 && a<150)  return 1;     // えびフリッター
+  if(a>=150 && a<210) return 2;     // ローストポーク
+  if(a>=210 && a<270) return 3;     // フライドチキン
+  if(a>=270 && a<330) return 4;     // バゲット
+  return 5;                         // 野菜盛り合わせ（330–360 or 0–30）
+}
+// 針の角（rad）→画面角度（deg）。0rad=上=90°
+const screenDegFromPointer = angRad => (90 + rad(norm(angRad)))%360;
+// セクター中心へ止めるための目標角（rad）
+const targetAngleForIndex = idx => deg(ITEMS[idx].centerDeg - 90);
+
+/* ===== レンダリングループ ===== */
+let last = performance.now();
+function render(now=performance.now()){
+  const dt = Math.min(0.033, (now - last)/1000); last = now;
+
+  // 等速回転中（STOP前）
+  if(spinning && !deceling){
+    pointerAngle = norm(pointerAngle + spinSpeed * dt);
+    pointerGroup.rotation.z = pointerAngle;
+  }
+
   wheel.rotation.z = 0; // 盤は固定
   renderer.render(scene, camera);
   requestAnimationFrame(render);
 }
 render();
 
-/* ================= サウンド ================= */
-let audioCtx, master, loopTimer, muted=false, bgmNode;
-function ensureAudio(){
-  if(audioCtx) return;
-  audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-  master = audioCtx.createGain(); master.gain.value=.45; master.connect(audioCtx.destination);
-  // 軽いBGM（3和音アルペジオ）
-  const bpm=112, beat=60/bpm;
-  function startBGM(){
-    if(muted) return;
-    stopBGM();
-    bgmNode = setInterval(()=>{
-      const t0 = audioCtx.currentTime;
-      [0,1,2,3,4,5,6,7].forEach((step)=>{
-        const t = t0 + step*beat/2;
-        const f = [392,494,587,659][step%4]; // G B D E
-        const o = audioCtx.createOscillator(); o.type='sine'; o.frequency.value=f;
-        const g = audioCtx.createGain(); g.gain.value=0.0001; o.connect(g).connect(master);
-        o.start(t);
-        g.gain.setValueAtTime(0.0001,t);
-        g.gain.exponentialRampToValueAtTime(0.10,t+0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001,t+beat/2-0.02);
-        o.stop(t+beat/2);
-      });
-    }, beat*1000*4);
-  }
-  function stopBGM(){ if(bgmNode){ clearInterval(bgmNode); bgmNode=null; } }
-  ensureAudio.startBGM = startBGM; ensureAudio.stopBGM = stopBGM;
-}
+/* ===== サウンド（簡易SE） ===== */
+let audioCtx, master, loopTimer, muted=false;
+function ensureAudio(){ if(audioCtx) return; audioCtx = new (window.AudioContext||window.webkitAudioContext)(); master = audioCtx.createGain(); master.gain.value=.45; master.connect(audioCtx.destination); }
 function startSpinLoop(){
   if(muted) return; ensureAudio(); stopSpinLoop();
   loopTimer = setInterval(()=>{
-    const freqs = [523.25,659.25,783.99];
-    freqs.forEach((f,i)=>{
-      const t = audioCtx.currentTime + i*0.08;
-      const o = audioCtx.createOscillator(); o.type='triangle'; o.frequency.value=f;
-      const g = audioCtx.createGain(); g.gain.value=0.0001; o.connect(g).connect(master);
-      o.start(t);
-      g.gain.setValueAtTime(0.0001,t);
-      g.gain.exponentialRampToValueAtTime(0.22,t+0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001,t+0.15);
-      o.stop(t+0.16);
+    const t = audioCtx.currentTime;
+    [523.25,659.25,783.99].forEach((f,i)=>{
+      const o=audioCtx.createOscillator(); o.type='triangle'; o.frequency.value=f;
+      const g=audioCtx.createGain(); g.gain.value=0.0001; o.connect(g).connect(master);
+      const tt = t + i*0.08;
+      o.start(tt); g.gain.setValueAtTime(0.0001,tt);
+      g.gain.exponentialRampToValueAtTime(0.20, tt+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, tt+0.15);
+      o.stop(tt+0.16);
     });
-  }, 260);
+  }, 240);
 }
 function stopSpinLoop(){ if(loopTimer){ clearInterval(loopTimer); loopTimer=null; } }
 function playHitSFX(){
   if(muted) return; ensureAudio();
-  const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-  o.type='square'; o.frequency.setValueAtTime(880, audioCtx.currentTime);
-  g.gain.value=0.0001; o.connect(g).connect(master); o.start();
-  const t = audioCtx.currentTime;
+  const o=audioCtx.createOscillator(); const g=audioCtx.createGain();
+  o.type='square'; o.frequency.value=880; o.connect(g).connect(master);
+  const t=audioCtx.currentTime; g.gain.value=0.0001; o.start(t);
   g.gain.exponentialRampToValueAtTime(0.35, t+0.01);
   o.frequency.exponentialRampToValueAtTime(1760, t+0.12);
   g.gain.exponentialRampToValueAtTime(0.0001, t+0.28);
   o.stop(t+0.30);
 }
 
-/* ================= ルール（抽選 & 角度合わせ） ================= */
-const targetAngleFor = idx => deg(ITEMS[idx].centerDeg - 90);
-function pick(){ return Math.floor(Math.random()*ITEMS.length); }
-function faceFor(name){
-  if(FACE_MODE === "random") return FACES[Math.floor(Math.random()*FACES.length)];
-  return FACE_MAP[name] || "face.png";
-}
-
-/* ================= スピン ================= */
-function spin(){
+/* ===== スピン/ストップ ===== */
+function spinStart(){
   if(spinning || spinsLeft<=0) return;
-  spinning = true; document.getElementById('spin').disabled = true;
-  ensureAudio(); ensureAudio.startBGM?.();
-  startSpinLoop();
+  spinning = true; deceling = false; lockedIdx = null;
+  btnSpin.disabled = true; btnStop.disabled = false;
+  ensureAudio(); startSpinLoop();
 
-  const idx = pick();
-  const jitter = deg((Math.random()*SECTOR*0.2) - (SECTOR*0.1)); // ±10%のブレ
-  const start  = norm(pointerAngle);
-  const target = norm(targetAngleFor(idx) + jitter);
-  const end    = start + 6*TAU + shortestDelta(start, target); // 6回転＋最短差
+  // 等速の角速度（rad/s）。長押しゲージが無いので固定値でもOK
+  spinSpeed = TAU * 1.8; // 1.8周/秒くらい（体感良い速度）
+}
+function spinStop(){
+  if(!spinning || deceling) return;
+  deceling = true; btnStop.disabled = true; stopSpinLoop();
 
-  const dur = 5200, t0 = performance.now();
-  const ease = t => 1 - Math.pow(1-t,3);
+  // STOP押下時の角度で「当たりセクター」をロック
+  const aDeg = screenDegFromPointer(pointerAngle);
+  lockedIdx = getItemByAngleDeg(aDeg);
 
-  (function anim(now){
+  // そのセクターの中心角へ“吸着”しながら3周回して止める
+  const jitter = deg((Math.random()*SECTOR*0.16) - (SECTOR*0.08)); // ±8%の小ブレ
+  const start = norm(pointerAngle);
+  const target = norm(targetAngleForIndex(lockedIdx) + jitter);
+  const end = start + 3*TAU + shortestDelta(start, target); // 3周＋最短差
+  const dur = 2800; const t0 = performance.now();
+  const ease = t => 1 - Math.pow(1-t, 3);
+
+  (function decel(now){
     const t = Math.min(1, (now - t0)/dur);
     pointerGroup.rotation.z = start + (end - start) * ease(t);
-    if(t<1) return requestAnimationFrame(anim);
+    if(t<1) return requestAnimationFrame(decel);
 
     pointerAngle = norm(end);
-    stopSpinLoop();
-
-    const it = ITEMS[idx];
-    results.push({ idx, name: it.name, emoji: it.emoji });
-
-    faceImg.src = faceFor(it.name);
-    faceOverlay.style.display = 'grid';
-    playHitSFX();
-    showToast(`${it.emoji} ${it.name}！`);
-    setTimeout(()=>{ faceOverlay.style.display='none'; }, FACE_SHOW_MS);
-
-    spinsLeft -= 1; setLeft(spinsLeft);
-    spinning = false; document.getElementById('spin').disabled = (spinsLeft<=0);
-    if(spinsLeft<=0) showSummary();
+    finishResult();
   })(performance.now());
 }
+function finishResult(){
+  spinning = false; deceling = false; btnSpin.disabled = (spinsLeft<=0); btnStop.disabled = true;
 
-/* ================= サマリー ================= */
+  const it = ITEMS[lockedIdx];
+  results.push({ idx: lockedIdx, name: it.name, emoji: it.emoji });
+
+  faceImg.src = FACE_MAP[it.name] || "face.png";
+  faceOverlay.style.display = 'grid';
+  playHitSFX();
+  showToast(`${it.emoji} ${it.name}！`);
+  setTimeout(()=>{ faceOverlay.style.display='none'; }, FACE_SHOW_MS);
+
+  spinsLeft -= 1; setLeft(spinsLeft);
+  if(spinsLeft<=0) showSummary();
+}
+
+/* ===== サマリー ===== */
 function showSummary(){
-  const map = new Map();
-  results.forEach(r=> map.set(r.name, (map.get(r.name)||0)+1));
-  const rows = [...map.entries()].map(([name,c])=>`<tr><td>${name}</td><td style="text-align:right">${c}</td></tr>`).join('');
+  const map=new Map(); results.forEach(r=> map.set(r.name,(map.get(r.name)||0)+1));
+  const rows=[...map.entries()].map(([n,c])=>`<tr><td>${n}</td><td style="text-align:right">${c}</td></tr>`).join('');
   document.getElementById('list').innerHTML =
     `<table><thead><tr><th>メニュー</th><th style="text-align:right">数量</th></tr></thead><tbody>${rows||'<tr><td colspan="2">なし</td></tr>'}</tbody></table>`;
   document.getElementById('summary').style.display='block';
 }
 
-/* ================= UI配線 ================= */
-document.getElementById('spin').addEventListener('click', spin);
-document.getElementById('reset').addEventListener('click', ()=>{
-  stopSpinLoop(); ensureAudio?.stopBGM?.(); results=[]; spinsLeft=0; setLeft('--');
-  document.getElementById('summary').style.display='none';
-  document.getElementById('spin').disabled=false;
+/* ===== UI配線 ===== */
+btnSpin.addEventListener('click', spinStart);
+btnStop.addEventListener('click', spinStop);
+btnReset.addEventListener('click', ()=>{
+  stopSpinLoop(); results=[]; spinsLeft=0; setLeft('--');
   pointerGroup.rotation.z = pointerAngle = 0;
+  btnSpin.disabled=false; btnStop.disabled=true;
+  document.getElementById('summary').style.display='none';
   document.getElementById('start').style.display='grid';
 });
-document.getElementById('mute').addEventListener('click', ()=>{
-  muted=!muted; showToast(muted?'ミュート':'サウンドON');
-});
+
 document.getElementById('startBtn').addEventListener('click', ()=>{
   const p = Math.max(1, Math.floor(Number(document.getElementById('people').value)||0));
-  spinsLeft = p*2; setLeft(spinsLeft); results=[]; document.getElementById('start').style.display='none';
-  ensureAudio(); ensureAudio.startBGM?.();
+  spinsLeft = p*2; setLeft(spinsLeft); results=[];
+  document.getElementById('start').style.display='none';
   showToast(`人数 ${p}人 / 合計 ${spinsLeft}回`);
 });
+
 document.getElementById('again').addEventListener('click', ()=>{
   document.getElementById('summary').style.display='none';
   document.getElementById('start').style.display='grid';

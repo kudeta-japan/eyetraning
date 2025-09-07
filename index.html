@@ -145,14 +145,20 @@ const ITEMS=[
   {name:"バゲット",emoji:"🥖",centerClock:300},
   {name:"野菜盛り合わせ",emoji:"🥦",centerClock:0},
 ];
-const FACE_MAP={
-  "牛コロカツ":"funny.png",
-  "えびフリッター":"happy.png",
-  "ローストポーク":"laugh.png",
-  "フライドチキン":"suprised.png",
-  "バゲット":"face.png",
-  "野菜盛り合わせ":"happy.png",
+const FACE_MAP = {
+  "牛コロカツ": ["funny.png"],
+  "えびフリッター": ["happy.png"],
+  "ローストポーク": ["laugh.png"],
+  "フライドチキン": ["suprised.png"],
+  "バゲット": ["sora.png"],          // ← バゲットは必ず sora.png
+  "野菜盛り合わせ": ["happy.png"],
 };
+
+// 選択関数（1要素なら必ずそれが返る）
+function faceFor(name){
+  const list = FACE_MAP[name] || ["face.png"];
+  return list[Math.floor(Math.random() * list.length)];
+}
 
 /* ========= 状態とDOM ========= */
 let spinsLeft=0, spinning=false;

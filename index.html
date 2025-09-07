@@ -111,18 +111,11 @@ const TAU = Math.PI * 2;
 const deg = d => THREE.MathUtils.degToRad(d);
 const radToDeg = r => THREE.MathUtils.radToDeg(r);
 const norm = a => THREE.MathUtils.euclideanModulo(a, TAU);
-/* 時計角⇔数学角（0=12時 vs 0=3時） */
-function toClockDeg(mathDeg){ return (90 - mathDeg + 360) % 360; }
-function toMathDeg(clockDeg){ return (90 - clockDeg + 360) % 360; }
+/* 時計角⇔数学角 */
+const toClockDeg = mathDeg => (90 - mathDeg + 360) % 360;
+const toMathDeg  = clockDeg => (90 - clockDeg + 360) % 360;
 
-/* ========= アイテム（指定の角度マッピング） =========
-  30–90 : 牛コロカツ
-  90–150: えびフリッター
-  150–210: ローストポーク
-  210–270: フライドチキン
-  270–330: バゲット
-  330–360,0–30: 野菜盛り合わせ
-*/
+/* ========= アイテム（角度マッピング） ========= */
 const ITEMS = [
   { name:"牛コロカツ",     emoji:"🥩", centerClock:  60 },
   { name:"えびフリッター", emoji:"🍤", centerClock: 120 },
@@ -149,10 +142,10 @@ const leftNum = document.getElementById('leftNum');
 const toast = document.getElementById('toast');
 const faceOverlay = document.getElementById('faceOverlay');
 const faceImg = document.getElementById('faceImg');
-const setLeft = (n)=> leftNum.textContent = n;
-const showToast = (m)=>{ toast.textContent=m; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), 1100); };
+const setLeft = n => leftNum.textContent = n;
+const showToast = m => { toast.textContent=m; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), 1100); };
 
-/* ========= LED リム生成（外側に） ========= */
+/* ========= LED リム（外側） ========= */
 const LED_RADIUS_PCT = 49.5;
 const ledBulbs = [];
 (function makeLED(){
@@ -162,7 +155,6 @@ const ledBulbs = [];
     const b = document.createElement('div');
     b.className = 'bulb';
     const aMath = i/bulbs * 360;
-    // CSS left/top は中心50%からの相対（sin/cosにそのまま掛ける）
     b.style.left = (50 + LED_RADIUS_PCT * Math.cos(deg(aMath))) + '%';
     b.style.top  = (50 + LED_RADIUS_PCT * Math.sin(deg(aMath))) + '%';
     ring.appendChild(b);
@@ -172,21 +164,14 @@ const ledBulbs = [];
 let ledPhase = 0, ledSpeed = 0.6, ledState = 'idle';
 function setLEDIdle(){ ledState='idle'; ledSpeed=0.6; highlightNone(); }
 function setLEDSpin(speed){ ledState='spin'; ledSpeed = 4 * Math.min(1, speed); }
-function setLEDWin(centerClock){
-  ledState='win';
-  highlightSectorClock(centerClock, 30);
-  setTimeout(()=> setLEDIdle(), 1400);
-}
-function highlightNone(){
-  ledBulbs.forEach(({el})=>{ el.style.boxShadow="0 0 8px rgba(243,200,98,.55)"; el.style.filter='brightness(.9)'; });
-}
+function setLEDWin(centerClock){ ledState='win'; highlightSectorClock(centerClock, 30); setTimeout(()=> setLEDIdle(), 1400); }
+function highlightNone(){ ledBulbs.forEach(({el})=>{ el.style.boxShadow="0 0 8px rgba(243,200,98,.55)"; el.style.filter='brightness(.9)'; }); }
 function highlightSectorClock(centerClock, half){
   const minC=(centerClock-half+360)%360, maxC=(centerClock+half+360)%360;
   ledBulbs.forEach(({el,aMath})=>{
     const aClock=(90-aMath+360)%360;
     const inArc=(minC<maxC)?(aClock>=minC&&aClock<=maxC):(aClock>=minC||aClock<=maxC);
-    el.style.boxShadow = inArc ? "0 0 20px 6px rgba(255,230,160,.95), 0 0 6px rgba(255,230,160,.9)"
-                               : "0 0 6px rgba(243,200,98,.45)";
+    el.style.boxShadow = inArc ? "0 0 20px 6px rgba(255,230,160,.95), 0 0 6px rgba(255,230,160,.9)" : "0 0 6px rgba(243,200,98,.45)";
     el.style.filter = inArc ? "brightness(1.6)" : "brightness(.9)";
   });
 }
@@ -219,44 +204,28 @@ const wheel = new THREE.Mesh(new THREE.PlaneGeometry(1,1), new THREE.MeshBasicMa
 scene.add(wheel);
 
 /* ── 針（豪華版） ── */
-// グループを2階層に分ける
-const pointerGroup = new THREE.Group(); // 回転用（常に盤の中心＝原点）
-scene.add(pointerGroup);
-
-const pointerBody = new THREE.Group();  // 見た目用
-pointerGroup.add(pointerBody);
-
-// rim, core, gem, glowTip などは pointerBody.add()
-pointerBody.add(rim);
-pointerBody.add(core);
-pointerBody.add(gem);
-pointerBody.add(glowTip, glowBody);
-
-// サイズと位置調整
-
-pointerGroup.rotation.z = pointerAngle = 0;      // ← 盤の中心を軸に回転できる
 function arrowShape(){
   const s=1,w=0.16*s,h=0.22*s,tail=0.14*s;
   const sh=new THREE.Shape();
-  sh.moveTo(0, h);
+  sh.moveTo(0,h);
   sh.lineTo(w,-h*0.4); sh.lineTo(w*0.75,-h*0.6); sh.lineTo(w*0.45,-h*0.65);
   sh.lineTo(w*0.45,-h-tail); sh.lineTo(-w*0.45,-h-tail);
   sh.lineTo(-w*0.45,-h*0.65); sh.lineTo(-w*0.75,-h*0.6); sh.lineTo(-w,-h*0.4);
-  sh.lineTo(0, h);
+  sh.lineTo(0,h);
   return sh;
 }
 const rimGeo = new THREE.ExtrudeGeometry(arrowShape(),{depth:0.06,bevelEnabled:true,bevelSize:0.008,bevelThickness:0.008,bevelSegments:3});
 rimGeo.center();
 const rimMat = new THREE.MeshPhysicalMaterial({color:0xd4a83d,metalness:0.95,roughness:0.25,clearcoat:1,clearcoatRoughness:0.2});
-const rim = new THREE.Mesh(rimGeo, rimMat); rim.rotation.x=Math.PI*0.5; pointerGroup.add(rim);
+const rim = new THREE.Mesh(rimGeo, rimMat); rim.rotation.x=Math.PI*0.5;
 
 const coreGeo = new THREE.ShapeGeometry(arrowShape()); coreGeo.center();
 const coreMat = new THREE.MeshBasicMaterial({color:0xff3b6a,transparent:true,opacity:0.95,blending:THREE.AdditiveBlending});
-const core = new THREE.Mesh(coreGeo, coreMat); core.rotation.x=Math.PI*0.5; core.position.y=0.031; pointerGroup.add(core);
+const core = new THREE.Mesh(coreGeo, coreMat); core.rotation.x=Math.PI*0.5; core.position.y=0.031;
 
 const gem = new THREE.Mesh(new THREE.SphereGeometry(0.032,24,24),
   new THREE.MeshStandardMaterial({color:0xffe6a0,emissive:0xff9fb5,emissiveIntensity:0.6,metalness:0.3,roughness:0.25}));
-gem.position.set(0,0.115,0.018); pointerGroup.add(gem);
+gem.position.set(0,0.115,0.018);
 
 function makeGlowSprite(px=320,color='rgba(255,90,118,1)'){
   const c=document.createElement('canvas'); c.width=c.height=px; const g=c.getContext('2d');
@@ -266,27 +235,41 @@ function makeGlowSprite(px=320,color='rgba(255,90,118,1)'){
   const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace;
   return new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));
 }
-const glowTip = makeGlowSprite(320); glowTip.position.set(0,0.115,0.02); glowTip.scale.set(0.35,0.35,1);
-const glowBody= makeGlowSprite(640); glowBody.position.set(0,-0.10,0.01); glowBody.scale.set(0.7,0.7,1);
-pointerGroup.add(glowTip,glowBody);
+const glowTip  = makeGlowSprite(320); glowTip.position.set(0,0.115,0.02); glowTip.scale.set(0.35,0.35,1);
+const glowBody = makeGlowSprite(640); glowBody.position.set(0,-0.10,0.01);  glowBody.scale.set(0.7,0.7,1);
 
-/* リサイズ＆配置 */
+/* 針グループ（回転用と見た目用を分離） */
+const pointerGroup = new THREE.Group();   // 回転の中心＝原点（盤の中心）
+const pointerBody  = new THREE.Group();   // 見た目（先端を上に持ってくる）
+pointerGroup.add(pointerBody);
+scene.add(pointerGroup);
+
+/* 針の見た目を body にまとめて追加（※定義後に add！） */
+pointerBody.add(rim);
+pointerBody.add(core);
+pointerBody.add(gem);
+pointerBody.add(glowTip, glowBody);
+
+/* リサイズ＆配置（サイズ依存はここでだけ処理） */
+let pointerScale = 1;
 function fit(){
   const w = innerWidth, h = innerHeight;
   renderer.setSize(w,h);
   camera = new THREE.OrthographicCamera(-w/2, w/2, h/2, -h/2, -10, 10);
   camera.position.set(0,0,5); camera.lookAt(0,0,0);
 
-  const size = Math.min(w,h) * 0.86;         // 盤サイズ
+  const size = Math.min(w,h) * 0.86;   // 盤サイズ
   wheel.scale.set(size, size, 1);
-  // 盤のサイズに追従して針を配置（中心回転＋見た目だけ上に）
-const ps = size * 0.22;
-pointerGroup.scale.set(ps, ps, ps);
-pointerGroup.position.set(0, 0, 0);      // 回転中心は原点
-const offset = size * 0.40 / ps;         // 見た目の位置だけ上へ
-pointerBody.position.set(0, offset, 0);
-pointerGroup.rotation.z = pointerAngle = 0;
 
+  // 針のスケールと見た目のオフセット
+  pointerScale = size * 0.22;
+  pointerGroup.scale.set(pointerScale, pointerScale, pointerScale);
+  pointerGroup.position.set(0,0,0);         // 回転中心は原点
+  const offset = size * 0.40 / pointerScale; // 見た目だけ上へ
+  pointerBody.position.set(0, offset, 0);
+
+  // 初期角
+  pointerGroup.rotation.z = pointerAngle = 0;
 }
 addEventListener('resize', fit); fit();
 
@@ -296,7 +279,6 @@ function ensureAudio(){
   if(audioCtx) return;
   audioCtx=new (window.AudioContext||window.webkitAudioContext)();
   master=audioCtx.createGain(); master.gain.value=.45; master.connect(audioCtx.destination);
-
   const bpm=112, beat=60/bpm;
   function startBGM(){
     if(muted) return; stopBGM();
@@ -311,8 +293,8 @@ function ensureAudio(){
         g.gain.exponentialRampToValueAtTime(0.10,t+0.02);
         g.gain.exponentialRampToValueAtTime(0.0001,t+beat/2-0.02);
         o.stop(t+beat/2);
-      }
-    }, beat*1000*4);
+      }}
+    , beat*1000*4);
   }
   function stopBGM(){ if(bgmNode){ clearInterval(bgmNode); bgmNode=null; } }
   ensureAudio.startBGM=startBGM; ensureAudio.stopBGM=stopBGM;
@@ -345,7 +327,7 @@ function playHitSFX(){
   o.stop(t+0.30);
 }
 
-/* ========= 角度→アイテム判定 ========= */
+/* ========= 判定（角度→アイテム） ========= */
 function clockDegFromRad(rad){
   const mathDeg=(radToDeg(rad)%360+360)%360;
   return (90 - mathDeg + 360) % 360;
@@ -363,16 +345,12 @@ function idxByAngleRad(rad){ return itemIdxByClockDeg(clockDegFromRad(rad)); }
 function targetAngleForIdx(idx){ return deg(toMathDeg(ITEMS[idx].centerClock)); }
 function faceFor(name){ return FACE_MAP[name] || "face.png"; }
 
-/* ========= スピン制御（ゆっくり止まる） ========= */
+/* ========= スピン（ゆっくり止まる） ========= */
 let omega=0, spinMode='idle';
 const OMEGA_MAX=10, ACCEL=16;
 let stopStartAngle=0, stopTargetAngle=0, stopElapsed=0, stopDuration=3.0;
-function shortestDelta(from,to){
-  let d=norm(to)-norm(from);
-  if(d>Math.PI) d-=TAU;
-  if(d<-Math.PI) d+=TAU;
-  return d;
-}
+const shortestDelta=(from,to)=>{ let d=norm(to)-norm(from); if(d>Math.PI) d-=TAU; if(d<-Math.PI) d+=TAU; return d; };
+
 function startSpin(){
   if(spinning || spinsLeft<=0) return;
   spinning=true;

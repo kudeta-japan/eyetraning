@@ -397,17 +397,32 @@ function startSpin(){
   spinMode='spin'; omega=0.0001; setLEDSpin(0.2);
 }
 function pressStop(){
-  if(spinMode!=='spin') return;
-  spinMode='stoppingTween';
+  if (spinMode !== 'spin') return;
+  spinMode = 'stoppingTween';
   stopSpinLoop();
 
-  const nowA=norm(pointerGroup.rotation.z);
-  const idx=idxByAngleRad(nowA);
-  const tgt=targetAngleForIdx(idx);
-  const laps=4 + Math.floor(Math.random()*3); // 4〜6周
-  stopStartAngle=nowA;
-  stopTargetAngle= nowA + laps*TAU + shortestDelta(nowA, tgt);
-  stopElapsed=0;
+  // 現在角度（数学角, rad）と「今指している区画」
+  const nowA = norm(pointerGroup.rotation.z);
+  const idx  = idxByAngleRad(nowA);
+
+  // その区画の中心角（数学角, rad）
+  const centerTgt = targetAngleForIdx(idx);
+
+  // ── ランダムにずらして「区画の中のどこか」で止める ──
+  // 区画幅は60°なので、±30°の範囲でジッターを与える
+  const maxOffset = THREE.MathUtils.degToRad(30);
+  const jitter    = (Math.random() * 2 - 1) * maxOffset; // -30°〜+30°
+  const tgt       = centerTgt + jitter;
+
+  // 4〜6周しながらターゲットへ（自然に見える周回数）
+  const laps = 4 + Math.floor(Math.random() * 3);
+
+  stopStartAngle  = nowA;
+  stopTargetAngle = nowA + laps * TAU + shortestDelta(nowA, tgt);
+  stopElapsed     = 0;
+
+  // 停止の長さも少しランダムに（2.7〜3.3秒）
+  stopDuration = 2.7 + Math.random() * 0.6;
 }
 function finishStop(){
   pointerGroup.rotation.z = norm(stopTargetAngle);

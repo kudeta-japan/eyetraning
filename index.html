@@ -222,30 +222,104 @@ const tex = loader.load('roulette_ui_6_sections.png');
 tex.colorSpace = THREE.SRGBColorSpace;
 const wheel = new THREE.Mesh(new THREE.PlaneGeometry(1,1), new THREE.MeshBasicMaterial({ map:tex, transparent:true }));
 scene.add(wheel);
-
-// 針（三角形）※針のみ回転
-const pointerGroup = new THREE.Group(); scene.add(pointerGroup);
-const shape = new THREE.Shape();
-shape.moveTo(0, 0.18);
-shape.lineTo(-0.12, -0.18);
-shape.lineTo( 0.12, -0.18);
-shape.lineTo(0, 0.18);
-const pointer = new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshBasicMaterial({ color:0xff5a76 }));
-pointerGroup.add(pointer);
-
+// 画面サイズに合わせてカメラ・盤サイズ・針位置を調整
 function fit(){
   const w = innerWidth, h = innerHeight;
-  renderer.setSize(w,h);
+  renderer.setSize(w, h);
+
+  // オルソカメラを毎回作り直し（画面いっぱいに表示）
   camera = new THREE.OrthographicCamera(-w/2, w/2, h/2, -h/2, -10, 10);
-  camera.position.set(0,0,5); camera.lookAt(0,0,0);
-  const size = Math.min(w,h) * 0.86;
+  camera.position.set(0, 0, 5);
+  camera.lookAt(0, 0, 0);
+
+  // 盤（wheel）を正方でフィット
+  const size = Math.min(w, h) * 0.86;   // 画面をほぼ占有
   wheel.scale.set(size, size, 1);
-  const ps = size * 0.22;
-  pointer.scale.set(ps, ps, 1);
-  pointer.position.set(0, size*0.40, 0);
+
+  // ★ 針のスケール・位置を盤サイズから算出
+  positionPointerByWheelSize(size);
+
+  // ★ 回転リセット（初期姿勢：真上）
   pointerGroup.rotation.z = pointerAngle = 0;
 }
-addEventListener('resize', fit); fit();
+
+// 初期化＆リサイズ対応
+addEventListener('resize', fit);
+fit();
+// ── 針（豪華版）：金の縁 + ネオン芯 + 宝石 + グロー ─────────────────
+const pointerGroup = new THREE.Group(); scene.add(pointerGroup);
+
+// 1) 針シェイプ（少しくびれ＋テール付きで“速そう”に）
+function arrowShape(){
+  const s = 1; const w = 0.16*s, h = 0.22*s, tail = 0.14*s;
+  const sh = new THREE.Shape();
+  sh.moveTo(0,  h);          // 先端
+  sh.lineTo( w, -h*0.4);
+  sh.lineTo( w*0.75, -h*0.6);
+  sh.lineTo( w*0.45, -h*0.65);
+  sh.lineTo( w*0.45, -h - tail);
+  sh.lineTo(-w*0.45, -h - tail);
+  sh.lineTo(-w*0.45, -h*0.65);
+  sh.lineTo(-w*0.75, -h*0.6);
+  sh.lineTo(-w, -h*0.4);
+  sh.lineTo(0,  h);
+  return sh;
+}
+
+// 2) 金の縁（厚み少し / クリアコートで金属感）
+const rimGeo = new THREE.ExtrudeGeometry(arrowShape(), { depth: 0.06, bevelEnabled: true, bevelSize: 0.008, bevelThickness: 0.008, bevelSegments: 3 });
+rimGeo.center();
+const rimMat = new THREE.MeshPhysicalMaterial({
+  color: 0xd4a83d, metalness: 0.95, roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.2
+});
+const rim = new THREE.Mesh(rimGeo, rimMat);
+rim.rotation.x = Math.PI*0.5;
+pointerGroup.add(rim);
+
+// 3) ネオン芯（赤〜ピンクの内側板 / 加算合成で光る）
+const coreGeo = new THREE.ShapeGeometry(arrowShape());
+coreGeo.center();
+const coreMat = new THREE.MeshBasicMaterial({ color: 0xff3b6a, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending });
+const core = new THREE.Mesh(coreGeo, coreMat);
+core.rotation.x = Math.PI*0.5;
+core.position.y = 0.031;        // 縁の上に少し浮かせる
+pointerGroup.add(core);
+
+// 4) 先端の宝石（小さな球＋エミッシブ）
+const gem = new THREE.Mesh(
+  new THREE.SphereGeometry(0.032, 24, 24),
+  new THREE.MeshStandardMaterial({ color: 0xffe6a0, emissive: 0xff9fb5, emissiveIntensity: 0.6, metalness: 0.3, roughness: 0.25 })
+);
+gem.position.set(0, 0.115, 0.018);
+pointerGroup.add(gem);
+
+// 5) グロー（スプライトでふんわり発光）
+function makeGlowSprite(sizePx=220, color='rgba(255,90,118,1)'){
+  const cvs = document.createElement('canvas'); cvs.width = cvs.height = sizePx;
+  const g = cvs.getContext('2d');
+  const grd = g.createRadialGradient(sizePx/2,sizePx/2,0, sizePx/2,sizePx/2,sizePx/2);
+  grd.addColorStop(0, color.replace('1)', '0.55)'));
+  grd.addColorStop(1, color.replace('1)', '0)'));
+  g.fillStyle = grd; g.fillRect(0,0,sizePx,sizePx);
+  const tex = new THREE.CanvasTexture(cvs); tex.colorSpace = THREE.SRGBColorSpace;
+  return new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, blending: THREE.AdditiveBlending, depthWrite:false }));
+}
+const glowTip  = makeGlowSprite(320);
+glowTip.position.set(0, 0.115, 0.02);
+glowTip.scale.set(0.35, 0.35, 1);
+
+const glowBody = makeGlowSprite(640);
+glowBody.position.set(0, -0.10, 0.01);
+glowBody.scale.set(0.7, 0.7, 1);
+
+pointerGroup.add(glowTip, glowBody);
+
+// 6) 針の位置（あなたの既存値に合わせる）
+function positionPointerByWheelSize(size){
+  const ps = size * 0.22;                  // スケール感は既存と同じ式に揃える
+  pointerGroup.scale.set(ps, ps, ps);
+  pointerGroup.position.set(0, size*0.40, 0); // 盤の外周付近
+}
 
 /* ========== サウンド ========== */
 let audioCtx, master, loopTimer, muted=false, bgmNode;
@@ -397,6 +471,20 @@ function finishStop(){
   document.getElementById('stop').disabled = true;
 
   if (spinsLeft<=0) showSummary();
+  
+// 針のスプリング（小さく気持ちよく揺れる）
+{
+  const base = pointerGroup.rotation.z;
+  let t = 0;
+  (function spring(){
+    t += 1/60;
+    const amp = THREE.MathUtils.degToRad(2.6) * Math.exp(-2.8*t);
+    const off = amp * Math.sin(11 * t);
+    pointerGroup.rotation.z = base + off;
+    if(amp > THREE.MathUtils.degToRad(0.06)) requestAnimationFrame(spring);
+    else pointerGroup.rotation.z = base;
+  })();
+}
 }
 
 /* ========== 進行（render から呼ぶ） ========== */

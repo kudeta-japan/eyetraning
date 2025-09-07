@@ -66,6 +66,30 @@
   #ledRing .ring .bulb{position:absolute; width:1.8%; aspect-ratio:1/1; border-radius:50%;
     background:radial-gradient(circle at 30% 30%, #fff8, #fff0 45%), radial-gradient(circle, #fbe6a4 0, #caa24a 60%, #7a5b1b 100%);
     box-shadow:0 0 8px rgba(243,200,98,.55); filter:brightness(.9)}
+
+  #start .grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3列 */
+  gap: 16px;
+}
+
+#start .numBtn {
+  font-size: 24px;
+  font-weight: 800;
+  padding: 20px 0;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(180deg, #ffe08a, #f7b733);
+  color: #141414;
+  box-shadow: 0 10px 28px rgba(0,0,0,.45);
+  transition: transform .12s, box-shadow .12s;
+}
+
+#start .numBtn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 12px 32px rgba(0,0,0,.55);
+}
 </style>
 </head>
 <body>
@@ -85,15 +109,19 @@
 
 <div id="toast">当たり！</div>
 
-<!-- 人数入力 -->
+<!-- 人数選択 -->
 <div id="start">
   <div class="card">
-    <h2 style="margin:0 0 10px">人数を入力してください</h2>
-    <div class="row">
-      <input type="number" id="people" min="1" step="1" value="2">
-      <button id="startBtn">開始</button>
+    <h2 style="margin:0 0 14px;text-align:center">人数を選んでください</h2>
+    <div class="grid">
+      <button class="numBtn" data-p="1">1</button>
+      <button class="numBtn" data-p="2">2</button>
+      <button class="numBtn" data-p="3">3</button>
+      <button class="numBtn" data-p="4">4</button>
+      <button class="numBtn" data-p="5">5</button>
+      <button class="numBtn" data-p="6">6</button>
     </div>
-    <div style="opacity:.7;margin-top:10px">※ 1人2回プレイ</div>
+    <div style="opacity:.7;margin-top:14px;text-align:center">※ 1人2回プレイ</div>
   </div>
 </div>
 
@@ -537,6 +565,18 @@ document.getElementById('again').addEventListener('click', ()=>{
 });
 document.getElementById('closeSummary').addEventListener('click', ()=>{
   document.getElementById('summary').style.display='none';
+});
+// 人数ボタンでスタート
+document.querySelectorAll('.numBtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const p = Number(btn.dataset.p);
+    spinsLeft = p * 2;
+    setLeft(spinsLeft);
+    results = [];
+    document.getElementById('start').style.display='none';
+    ensureAudio(); ensureAudio.startBGM?.();
+    showToast(`人数 ${p}人 / 合計 ${spinsLeft}回`);
+  });
 });
 </script>
 </body>

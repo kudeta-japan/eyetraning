@@ -9,8 +9,17 @@
     --bg:#080b14; --ink:#eef2ff; --panel:#0e1330;
     --gold:#f3c862; --accent:#ff5a76;
   }
-  html,body{height:100%;margin:0;background:radial-gradient(1000px 700px at 70% -10%, rgba(255,255,255,.06), transparent 60%), var(--bg); color:var(--ink); font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,"Noto Sans JP"; overflow:hidden}
-  #stage{position:fixed;inset:0}
+  html,body {
+  height:100%;
+  margin:0;
+  background: 
+    linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)),
+    url("top.png") no-repeat center center fixed;
+  background-size: cover;
+  color:var(--ink);
+  font-family: ui-sans-serif,-apple-system,Segoe UI,Roboto,"Noto Sans JP";
+  overflow:hidden;
+}#stage{position:fixed;inset:0}
 
   /* 残り回数 */
   #leftBadge{position:fixed;left:10px;top:10px;z-index:20;background:rgba(20,24,40,.7);

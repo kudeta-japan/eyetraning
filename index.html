@@ -363,7 +363,7 @@ function playHitSFX(){
 
 /* ========= 判定（角度→アイテム） ========= */
 // 針→時計角の補正（+なら時計回り、−なら反時計回り）
-const JUDGE_OFFSET_CLOCK = 90; // ← ずれが逆なら -90 に
+const JUDGE_OFFSET_CLOCK = -90; // ← ずれが逆なら -90 に
 
 function clockDegFromRad(rad){
   const mathDeg = (radToDeg(rad) % 360 + 360) % 360;

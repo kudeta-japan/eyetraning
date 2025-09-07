@@ -203,53 +203,72 @@ tex.colorSpace = THREE.SRGBColorSpace;
 const wheel = new THREE.Mesh(new THREE.PlaneGeometry(1,1), new THREE.MeshBasicMaterial({ map:tex, transparent:true }));
 scene.add(wheel);
 
-/* ── 針（豪華版） ── */
-function arrowShape(){
-  const s=1,w=0.16*s,h=0.22*s,tail=0.14*s;
-  const sh=new THREE.Shape();
-  sh.moveTo(0,h);
-  sh.lineTo(w,-h*0.4); sh.lineTo(w*0.75,-h*0.6); sh.lineTo(w*0.45,-h*0.65);
-  sh.lineTo(w*0.45,-h-tail); sh.lineTo(-w*0.45,-h-tail);
-  sh.lineTo(-w*0.45,-h*0.65); sh.lineTo(-w*0.75,-h*0.6); sh.lineTo(-w,-h*0.4);
-  sh.lineTo(0,h);
-  return sh;
-}
-const rimGeo = new THREE.ExtrudeGeometry(arrowShape(),{depth:0.06,bevelEnabled:true,bevelSize:0.008,bevelThickness:0.008,bevelSegments:3});
-rimGeo.center();
-const rimMat = new THREE.MeshPhysicalMaterial({color:0xd4a83d,metalness:0.95,roughness:0.25,clearcoat:1,clearcoatRoughness:0.2});
-const rim = new THREE.Mesh(rimGeo, rimMat); rim.rotation.x=Math.PI*0.5;
+/* ── 針（わかりやすいクラシック矢印ver） ── */
+// 盤の中心(原点)を回転軸にするため：
+// pointerGroup は原点に置き、見た目の針は「アンカー」を少し上にずらして載せる。
+const pointerGroup = new THREE.Group();   // ← 回転用（原点）
+scene.add(pointerGroup);
 
-const coreGeo = new THREE.ShapeGeometry(arrowShape()); coreGeo.center();
-const coreMat = new THREE.MeshBasicMaterial({color:0xff3b6a,transparent:true,opacity:0.95,blending:THREE.AdditiveBlending});
-const core = new THREE.Mesh(coreGeo, coreMat); core.rotation.x=Math.PI*0.5; core.position.y=0.031;
+const pointerAnchor = new THREE.Group();  // ← 見た目を載せる土台（上へオフセット）
+pointerGroup.add(pointerAnchor);
 
-const gem = new THREE.Mesh(new THREE.SphereGeometry(0.032,24,24),
-  new THREE.MeshStandardMaterial({color:0xffe6a0,emissive:0xff9fb5,emissiveIntensity:0.6,metalness:0.3,roughness:0.25}));
-gem.position.set(0,0.115,0.018);
-
-function makeGlowSprite(px=320,color='rgba(255,90,118,1)'){
-  const c=document.createElement('canvas'); c.width=c.height=px; const g=c.getContext('2d');
-  const grd=g.createRadialGradient(px/2,px/2,0,px/2,px/2,px/2);
-  grd.addColorStop(0,color.replace('1)', '0.55)')); grd.addColorStop(1,color.replace('1)', '0)'));
+function makeGlowSprite(px=320, rgba='rgba(255,90,118,1)'){
+  const c=document.createElement('canvas'); c.width=c.height=px;
+  const g=c.getContext('2d');
+  const grd=g.createRadialGradient(px/2,px/2,0, px/2,px/2,px/2);
+  grd.addColorStop(0, rgba.replace('1)', '0.55)'));
+  grd.addColorStop(1, rgba.replace('1)', '0)'));
   g.fillStyle=grd; g.fillRect(0,0,px,px);
   const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace;
   return new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));
 }
-const glowTip  = makeGlowSprite(320); glowTip.position.set(0,0.115,0.02); glowTip.scale.set(0.35,0.35,1);
-const glowBody = makeGlowSprite(640); glowBody.position.set(0,-0.10,0.01);  glowBody.scale.set(0.7,0.7,1);
 
-/* 針グループ（回転用と見た目用を分離） */
-const pointerGroup = new THREE.Group();   // 回転の中心＝原点（盤の中心）
-const pointerBody  = new THREE.Group();   // 見た目（先端を上に持ってくる）
-pointerGroup.add(pointerBody);
-scene.add(pointerGroup);
+function buildPointer(){
+  const g = new THREE.Group();
 
-/* 針の見た目を body にまとめて追加（※定義後に add！） */
-pointerBody.add(rim);
-pointerBody.add(core);
-pointerBody.add(gem);
-pointerBody.add(glowTip, glowBody);
+  // 台座（円形の金属キャップ）
+  const base = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.16,0.2,0.06,48),
+    new THREE.MeshPhysicalMaterial({ color:0x8c6b2a, metalness:1, roughness:.25, clearcoat:1, clearcoatRoughness:.15 })
+  );
+  base.position.set(0,-0.03,0);
+  g.add(base);
 
+  // シャフト（細い金色の棒）
+  const shaft = new THREE.Mesh(
+    new THREE.BoxGeometry(0.06,0.30,0.05),
+    new THREE.MeshPhysicalMaterial({ color:0xd4a83d, metalness:.95, roughness:.28, clearcoat:1 })
+  );
+  shaft.position.y = 0.10;
+  g.add(shaft);
+
+  // 矢じり（赤い三角コーン）
+  const head = new THREE.Mesh(
+    new THREE.ConeGeometry(0.13,0.24,40),
+    new THREE.MeshPhysicalMaterial({ color:0xff3b3b, emissive:0x330000, emissiveIntensity:.5, metalness:.2, roughness:.3, clearcoat:1 })
+  );
+  head.rotation.z = Math.PI;     // 先端を上に
+  head.position.y = 0.30 + 0.12; // シャフト上に乗せる
+  g.add(head);
+
+  // 先端LED（光る玉）
+  const tip = new THREE.Mesh(
+    new THREE.SphereGeometry(0.032, 24, 24),
+    new THREE.MeshStandardMaterial({ color:0xffe6a0, emissive:0xffcf66, emissiveIntensity:1.2, metalness:.2, roughness:.3 })
+  );
+  tip.position.y = head.position.y + 0.11;
+  g.add(tip);
+
+  // ふんわりグロー（スプライト）
+  const glow = makeGlowSprite(420, 'rgba(255,80,120,1)');
+  glow.position.set(0, tip.position.y, 0.02);
+  glow.scale.set(0.46,0.46,1);
+  g.add(glow);
+
+  return g;
+}
+const pointerVisual = buildPointer();
+pointerAnchor.add(pointerVisual);
 /* リサイズ＆配置（サイズ依存はここでだけ処理） */
 let pointerScale = 1;
 function fit(){
@@ -262,7 +281,7 @@ function fit(){
   wheel.scale.set(size, size, 1);
 
   // 針のスケールと見た目のオフセット
-  pointerScale = size * 0.22;
+  const pointerScale = size * 0.22;
   pointerGroup.scale.set(pointerScale, pointerScale, pointerScale);
   pointerGroup.position.set(0,0,0);         // 回転中心は原点
   const offset = size * 0.40 / pointerScale; // 見た目だけ上へ
@@ -272,6 +291,22 @@ function fit(){
   pointerGroup.rotation.z = pointerAngle = 0;
 }
 addEventListener('resize', fit); fit();
+
+// 着地後の小バウンス（視覚のみ：最終当たりは変えない）
+(function settleBounce(){
+  const base = pointerGroup.rotation.z;     // 着地角
+  const start = performance.now();
+  const D = 380;                             // 全体の長さ(ms)
+  function easeOutExpo(t){ return 1 - Math.pow(2, -10*t); }
+  function frame(now){
+    const t = Math.min(1, (now - start)/D);
+    const amp = deg(1.1) * (1 - t);         // 振幅は徐々に減衰（最大約1.1°）
+    pointerGroup.rotation.z = base + Math.sin(t * Math.PI * 2) * amp * easeOutExpo(t);
+    if (t < 1) requestAnimationFrame(frame);
+    else pointerGroup.rotation.z = base;     // 最終的にぴったり戻す
+  }
+  requestAnimationFrame(frame);
+})();
 
 /* ========= オーディオ ========= */
 let audioCtx, master, loopTimer, muted=false, bgmNode;

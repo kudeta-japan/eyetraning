@@ -239,6 +239,14 @@ const tex = loader.load('roulette_ui_6_sections.png');
 tex.colorSpace = THREE.SRGBColorSpace;
 const wheel = new THREE.Mesh(new THREE.PlaneGeometry(1,1), new THREE.MeshBasicMaterial({ map:tex, transparent:true }));
 scene.add(wheel);
+// 豪華リム
+const rimGeo = new THREE.RingGeometry(0.49, 0.54, 96);
+const rimMat = new THREE.MeshPhysicalMaterial({
+  color:0xd6b253, metalness:1, roughness:.25, clearcoat:1, clearcoatRoughness:.15
+});
+const rimMesh = new THREE.Mesh(rimGeo, rimMat);
+rimMesh.position.z = -0.001; // 盤のちょい下に
+scene.add(rimMesh);
 
 /* ── 針（わかりやすいクラシック矢印ver） ── */
 // 盤の中心(原点)を回転軸にするため：
@@ -260,50 +268,81 @@ function makeGlowSprite(px=320, rgba='rgba(255,90,118,1)'){
   return new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));
 }
 
+// ここから buildPointer を丸ごと置換
 function buildPointer(){
   const g = new THREE.Group();
 
-  // 台座（円形の金属キャップ）
+  // 台座（厚め・金属感UP）
   const base = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.16,0.2,0.06,48),
-    new THREE.MeshPhysicalMaterial({ color:0x8c6b2a, metalness:1, roughness:.25, clearcoat:1, clearcoatRoughness:.15 })
+    new THREE.CylinderGeometry(0.22,0.26,0.08,64),
+    new THREE.MeshPhysicalMaterial({
+      color:0x9c7b2f, metalness:1, roughness:.22, clearcoat:1, clearcoatRoughness:.15
+    })
   );
-  base.position.set(0,-0.03,0);
+  base.position.set(0,-0.04,0);
   g.add(base);
 
-  // シャフト（細い金色の棒）
+  // シャフト（白磁っぽい質感）
   const shaft = new THREE.Mesh(
-    new THREE.BoxGeometry(0.06,0.30,0.05),
-    new THREE.MeshPhysicalMaterial({ color:0xd4a83d, metalness:.95, roughness:.28, clearcoat:1 })
+    new THREE.CapsuleGeometry(0.055,0.28, 1, 24),
+    new THREE.MeshPhysicalMaterial({
+      color:0xf7f7fb, metalness:.15, roughness:.2, transmission:.0, clearcoat:1
+    })
   );
-  shaft.position.y = 0.10;
+  shaft.position.y = 0.12;
   g.add(shaft);
 
-  // 矢じり（赤い三角コーン）
-  const head = new THREE.Mesh(
-    new THREE.ConeGeometry(0.13,0.24,40),
-    new THREE.MeshPhysicalMaterial({ color:0xff3b3b, emissive:0x330000, emissiveIntensity:.5, metalness:.2, roughness:.3, clearcoat:1 })
+  // 金リング（シャフトと矢じりの境目）
+  const collar = new THREE.Mesh(
+    new THREE.TorusGeometry(0.09, 0.018, 24, 64),
+    new THREE.MeshPhysicalMaterial({ color:0xd8b04f, metalness:1, roughness:.2, clearcoat:1 })
   );
-  head.rotation.z = Math.PI;     // 先端を上に
-  head.position.y = 0.30 + 0.12; // シャフト上に乗せる
-  g.add(head);
+  collar.rotation.x = Math.PI/2;
+  collar.position.y = 0.26;
+  g.add(collar);
 
-  // 先端LED（光る玉）
-  const tip = new THREE.Mesh(
-    new THREE.SphereGeometry(0.032, 24, 24),
-    new THREE.MeshStandardMaterial({ color:0xffe6a0, emissive:0xffcf66, emissiveIntensity:1.2, metalness:.2, roughness:.3 })
+  // 矢じり（白コーン＋赤エミッシブの先端カバーで“矢印感”）
+  const headBody = new THREE.Mesh(
+    new THREE.ConeGeometry(0.16,0.26, 48),
+    new THREE.MeshPhysicalMaterial({ color:0xffffff, metalness:.2, roughness:.3, clearcoat:1 })
   );
-  tip.position.y = head.position.y + 0.11;
+  headBody.rotation.z = Math.PI;         // 先端を上向き
+  headBody.position.y = 0.26 + 0.13;
+  g.add(headBody);
+
+  // 先端キャップ（赤く光る）
+  const tipCap = new THREE.Mesh(
+    new THREE.ConeGeometry(0.125,0.1, 40),
+    new THREE.MeshPhysicalMaterial({
+      color:0xff3b3b, emissive:0x991122, emissiveIntensity:0.9,
+      metalness:.2, roughness:.25, clearcoat:1
+    })
+  );
+  tipCap.rotation.z = Math.PI;
+  tipCap.position.y = headBody.position.y + 0.13;
+  g.add(tipCap);
+
+  // ダイヤ風の先珠
+  const tip = new THREE.Mesh(
+    new THREE.OctahedronGeometry(0.045, 1),
+    new THREE.MeshStandardMaterial({ color:0xfff3c0, emissive:0xffe39a, emissiveIntensity:1.3, metalness:.3, roughness:.2 })
+  );
+  tip.position.y = tipCap.position.y + 0.08;
   g.add(tip);
 
-  // ふんわりグロー（スプライト）
-  const glow = makeGlowSprite(420, 'rgba(255,80,120,1)');
-  glow.position.set(0, tip.position.y, 0.02);
-  glow.scale.set(0.46,0.46,1);
-  g.add(glow);
+  // グロー（白×金の2層）
+  const glowWhite = makeGlowSprite(520, 'rgba(255,255,255,1)');
+  glowWhite.position.set(0, tip.position.y, 0.02);
+  glowWhite.scale.set(0.50,0.50,1);
 
+  const glowGold = makeGlowSprite(560, 'rgba(255,210,120,1)');
+  glowGold.position.set(0, tip.position.y - 0.02, 0.01);
+  glowGold.scale.set(0.58,0.58,1);
+
+  g.add(glowWhite, glowGold);
   return g;
 }
+// ここまで置換
 const pointerVisual = buildPointer();
 pointerAnchor.add(pointerVisual);
 /* リサイズ＆配置（サイズ依存はここでだけ処理） */
@@ -315,6 +354,8 @@ function fit(){
 
   const size = Math.min(w,h) * 0.86;   // 盤サイズ
   wheel.scale.set(size, size, 1);
+  // fit() 内の wheel.scale.set(size, size, 1); の直後に追記
+rimMesh.scale.set(size, size, 1);
 
   // 針のスケールと見た目のオフセット
   const pointerScale = size * 0.22;
@@ -549,14 +590,7 @@ document.getElementById('mute').addEventListener('click', ()=>{
   muted=!muted; showToast(muted?'ミュート':'サウンドON');
 });
 
-/* 人数 → 残り回数 */
-document.getElementById('startBtn').addEventListener('click', ()=>{
-  const p = Math.max(1, Math.floor(Number(document.getElementById('people').value)||0));
-  spinsLeft = p*2; setLeft(spinsLeft); results=[];
-  document.getElementById('start').style.display='none';
-  ensureAudio(); ensureAudio.startBGM?.();
-  showToast(`人数 ${p}人 / 合計 ${spinsLeft}回`);
-});
+
 
 /* サマリー後の操作 */
 document.getElementById('again').addEventListener('click', ()=>{

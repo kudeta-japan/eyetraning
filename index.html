@@ -9,23 +9,23 @@
     --bg:#080b14; --ink:#eef2ff; --panel:#0e1330;
     --gold:#f3c862; --accent:#ff5a76;
   }
-  html,body {
-  height:100%;
-  margin:0;
-  background: 
-    linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)),
-    url("top.png") no-repeat center center fixed;
-  background-size: cover;
-  color:var(--ink);
-  font-family: ui-sans-serif,-apple-system,Segoe UI,Roboto,"Noto Sans JP";
-  overflow:hidden;
-}#stage{position:fixed;inset:0}
+  html,body{
+    height:100%; margin:0;
+    background:
+      linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)),
+      url("top.png") no-repeat center center fixed;
+    background-size:cover;
+    color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,"Noto Sans JP";
+    overflow:hidden;
+  }
+  #stage{position:fixed;inset:0}
 
   /* 残り回数 */
   #leftBadge{position:fixed;left:10px;top:10px;z-index:20;background:rgba(20,24,40,.7);
-    border:1px solid rgba(255,255,255,.1);padding:8px 12px;border-radius:10px;font-weight:800;backdrop-filter: blur(4px)}
+    border:1px solid rgba(255,255,255,.1);padding:8px 12px;border-radius:10px;font-weight:800;backdrop-filter:blur(4px)}
 
-  /* ボタン */
+  /* 操作ボタン */
   #controls{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:14px;z-index:20}
   button{appearance:none;border:none;border-radius:14px;padding:14px 22px;font-size:18px;font-weight:900;cursor:pointer;
     background:linear-gradient(180deg,#ffe08a,#f7b733);color:#141414;box-shadow:0 10px 28px rgba(0,0,0,.45)}
@@ -33,21 +33,23 @@
   button:disabled{opacity:.5;cursor:not-allowed}
   #mute{width:46px;padding:12px 0}
 
-  /* 当たりトースト */
+  /* トースト */
   #toast{position:fixed;left:50%;top:16px;transform:translateX(-50%) translateY(-16px);background:#111533;
     border:1px solid rgba(255,255,255,.18);padding:10px 14px;border-radius:12px;font-weight:800;opacity:0;
     transition:.25s;z-index:30}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-  /* 人数モーダル */
+  /* 人数選択 */
   #start{position:fixed;inset:0;display:grid;place-items:center;background:rgba(5,8,16,.92);z-index:40}
   #start .card{background:linear-gradient(180deg,#161c33,#0f1330);border:1px solid rgba(255,255,255,.12);border-radius:16px;
-    padding:20px;width:min(92vw,480px);box-shadow:0 24px 60px rgba(0,0,0,.6)}
-  #start .row{display:flex;gap:10px;align-items:center}
-  #start input[type=number]{flex:1;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.15);
-    background:#0c1126;color:#fff;font-size:18px}
+    padding:20px;width:min(92vw,520px);box-shadow:0 24px 60px rgba(0,0,0,.6)}
+  #start .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  #start .numBtn{font-size:28px;font-weight:800;padding:22px 0;border-radius:14px;border:none;cursor:pointer;
+    background:linear-gradient(180deg,#ffe08a,#f7b733);color:#141414;box-shadow:0 10px 28px rgba(0,0,0,.45);
+    transition:transform .12s, box-shadow .12s}
+  #start .numBtn:hover{transform:scale(1.08);box-shadow:0 12px 32px rgba(0,0,0,.55)}
 
-  /* 顔オーバーレイ */
+  /* 顔オーバーレイ（当たり演出） */
   #faceOverlay{position:fixed;inset:0;display:none;place-items:center;background:radial-gradient(600px 420px at 50% 40%,rgba(255,255,255,.06),transparent 60%);z-index:35;pointer-events:none}
   #faceOverlay img{max-width:62vw;max-height:62vh;border-radius:16px;box-shadow:0 18px 60px rgba(0,0,0,.55);animation:pop .5s ease both}
   @keyframes pop{0%{transform:scale(.86);opacity:0}100%{transform:scale(1);opacity:1}}
@@ -60,36 +62,16 @@
   #summary th{text-align:left;color:#aeb8ff}
   #summary tr:last-child td{border-bottom:none}
 
-  /* LED リム（DOM） */
+  /* LED リム */
   #ledRing{position:fixed;inset:0;pointer-events:none;display:grid;place-items:center;z-index:10}
-  #ledRing .ring{position:relative; width:min(80vmin,980px); aspect-ratio:1/1;}
-  #ledRing .ring .bulb{position:absolute; width:1.8%; aspect-ratio:1/1; border-radius:50%;
+  #ledRing .ring{position:relative;width:min(80vmin,980px);aspect-ratio:1/1;}
+  #ledRing .ring .bulb{position:absolute;width:1.8%;aspect-ratio:1/1;border-radius:50%;
     background:radial-gradient(circle at 30% 30%, #fff8, #fff0 45%), radial-gradient(circle, #fbe6a4 0, #caa24a 60%, #7a5b1b 100%);
-    box-shadow:0 0 8px rgba(243,200,98,.55); filter:brightness(.9)}
+    box-shadow:0 0 8px rgba(243,200,98,.55);filter:brightness(.9)}
 
-  #start .grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3列 */
-  gap: 16px;
-}
-
-#start .numBtn {
-  font-size: 24px;
-  font-weight: 800;
-  padding: 20px 0;
-  border-radius: 14px;
-  border: none;
-  cursor: pointer;
-  background: linear-gradient(180deg, #ffe08a, #f7b733);
-  color: #141414;
-  box-shadow: 0 10px 28px rgba(0,0,0,.45);
-  transition: transform .12s, box-shadow .12s;
-}
-
-#start .numBtn:hover {
-  transform: scale(1.08);
-  box-shadow: 0 12px 32px rgba(0,0,0,.55);
-}
+  /* Cong 画面（2秒だけ表示） */
+  #congScreen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.85);z-index:60}
+  #congScreen img{max-width:80vmin;max-height:80vmin;border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.6)}
 </style>
 </head>
 <body>
@@ -125,6 +107,9 @@
   </div>
 </div>
 
+<!-- Cong 画面 -->
+<div id="congScreen"><img src="cong.png" alt="Congratulations"></div>
+
 <!-- 顔オーバーレイ -->
 <div id="faceOverlay"><img id="faceImg" alt=""></div>
 
@@ -140,29 +125,27 @@
   </div>
 </div>
 
-<!-- three.js（非moduleで確実動作） -->
+<!-- three.js -->
 <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
 <script>
 /* ========= 便利関数 ========= */
-const TAU = Math.PI * 2;
-const deg = d => THREE.MathUtils.degToRad(d);
-const radToDeg = r => THREE.MathUtils.radToDeg(r);
-const norm = a => THREE.MathUtils.euclideanModulo(a, TAU);
-/* 時計角⇔数学角 */
-const toClockDeg = mathDeg => (90 - mathDeg + 360) % 360;
-const toMathDeg  = clockDeg => (90 - clockDeg + 360) % 360;
+const TAU=Math.PI*2;
+const deg=d=>THREE.MathUtils.degToRad(d);
+const radToDeg=r=>THREE.MathUtils.radToDeg(r);
+const norm=a=>THREE.MathUtils.euclideanModulo(a,TAU);
+const toClockDeg=mathDeg=>(90-mathDeg+360)%360;
+const toMathDeg =clockDeg=>(90-clockDeg+360)%360;
 
 /* ========= アイテム（角度マッピング） ========= */
-const ITEMS = [
-  { name:"牛コロカツ",     emoji:"🥩", centerClock:  60 },
-  { name:"えびフリッター", emoji:"🍤", centerClock: 120 },
-  { name:"ローストポーク", emoji:"🍖", centerClock: 180 },
-  { name:"フライドチキン", emoji:"🍗", centerClock: 240 },
-  { name:"バゲット",       emoji:"🥖", centerClock: 300 },
-  { name:"野菜盛り合わせ", emoji:"🥦", centerClock:   0 },
+const ITEMS=[
+  {name:"牛コロカツ",emoji:"🥩",centerClock:60},
+  {name:"えびフリッター",emoji:"🍤",centerClock:120},
+  {name:"ローストポーク",emoji:"🍖",centerClock:180},
+  {name:"フライドチキン",emoji:"🍗",centerClock:240},
+  {name:"バゲット",emoji:"🥖",centerClock:300},
+  {name:"野菜盛り合わせ",emoji:"🥦",centerClock:0},
 ];
-const FACES = ["face.png","suprised.png","happy.png","laugh.png","funny.png"];
-const FACE_MAP = {
+const FACE_MAP={
   "牛コロカツ":"funny.png",
   "えびフリッター":"happy.png",
   "ローストポーク":"laugh.png",
@@ -172,241 +155,173 @@ const FACE_MAP = {
 };
 
 /* ========= 状態とDOM ========= */
-let spinsLeft = 0, spinning = false;
-let pointerAngle = 0;  // 針の数学角(rad)
-let results = [];
-const leftNum = document.getElementById('leftNum');
-const toast = document.getElementById('toast');
-const faceOverlay = document.getElementById('faceOverlay');
-const faceImg = document.getElementById('faceImg');
-const setLeft = n => leftNum.textContent = n;
-const showToast = m => { toast.textContent=m; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), 1100); };
+let spinsLeft=0, spinning=false;
+let pointerAngle=0;  // 数学角(rad)
+let results=[];
+const leftNum=document.getElementById('leftNum');
+const toast=document.getElementById('toast');
+const faceOverlay=document.getElementById('faceOverlay');
+const faceImg=document.getElementById('faceImg');
+const congScreen=document.getElementById('congScreen');
+const setLeft=n=>leftNum.textContent=n;
+const showToast=m=>{toast.textContent=m;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),1100);};
 
-/* ========= LED リム（外側） ========= */
-const LED_RADIUS_PCT = 49.5;
-const ledBulbs = [];
+/* ========= LED（外側） ========= */
+const LED_RADIUS_PCT=49.5;
+const ledBulbs=[];
 (function makeLED(){
-  const ring = document.getElementById('ring');
-  const bulbs = 64;
+  const ring=document.getElementById('ring'); const bulbs=64;
   for(let i=0;i<bulbs;i++){
-    const b = document.createElement('div');
-    b.className = 'bulb';
-    const aMath = i/bulbs * 360;
-    b.style.left = (50 + LED_RADIUS_PCT * Math.cos(deg(aMath))) + '%';
-    b.style.top  = (50 + LED_RADIUS_PCT * Math.sin(deg(aMath))) + '%';
-    ring.appendChild(b);
-    ledBulbs.push({el:b, aMath});
+    const b=document.createElement('div'); b.className='bulb';
+    const aMath=i/bulbs*360;
+    b.style.left=(50+LED_RADIUS_PCT*Math.cos(deg(aMath)))+'%';
+    b.style.top =(50+LED_RADIUS_PCT*Math.sin(deg(aMath)))+'%';
+    ring.appendChild(b); ledBulbs.push({el:b,aMath});
   }
 })();
-let ledPhase = 0, ledSpeed = 0.6, ledState = 'idle';
-function setLEDIdle(){ ledState='idle'; ledSpeed=0.6; highlightNone(); }
-function setLEDSpin(speed){ ledState='spin'; ledSpeed = 4 * Math.min(1, speed); }
-function setLEDWin(centerClock){ ledState='win'; highlightSectorClock(centerClock, 30); setTimeout(()=> setLEDIdle(), 1400); }
-function highlightNone(){ ledBulbs.forEach(({el})=>{ el.style.boxShadow="0 0 8px rgba(243,200,98,.55)"; el.style.filter='brightness(.9)'; }); }
-function highlightSectorClock(centerClock, half){
+let ledPhase=0, ledSpeed=0.6, ledState='idle';
+function setLEDIdle(){ledState='idle';ledSpeed=.6;highlightNone();}
+function setLEDSpin(speed){ledState='spin';ledSpeed=4*Math.min(1,speed);}
+function setLEDWin(centerClock){ledState='win';highlightSectorClock(centerClock,30);setTimeout(()=>setLEDIdle(),1400);}
+function highlightNone(){ledBulbs.forEach(({el})=>{el.style.boxShadow="0 0 8px rgba(243,200,98,.55)";el.style.filter='brightness(.9)';});}
+function highlightSectorClock(centerClock,half){
   const minC=(centerClock-half+360)%360, maxC=(centerClock+half+360)%360;
   ledBulbs.forEach(({el,aMath})=>{
     const aClock=(90-aMath+360)%360;
     const inArc=(minC<maxC)?(aClock>=minC&&aClock<=maxC):(aClock>=minC||aClock<=maxC);
-    el.style.boxShadow = inArc ? "0 0 20px 6px rgba(255,230,160,.95), 0 0 6px rgba(255,230,160,.9)" : "0 0 6px rgba(243,200,98,.45)";
-    el.style.filter = inArc ? "brightness(1.6)" : "brightness(.9)";
+    el.style.boxShadow=inArc?"0 0 20px 6px rgba(255,230,160,.95), 0 0 6px rgba(255,230,160,.9)":"0 0 6px rgba(243,200,98,.45)";
+    el.style.filter=inArc?"brightness(1.6)":"brightness(.9)";
   });
 }
 function stepLED(dt){
-  if(ledState==='idle' || ledState==='spin'){
-    ledPhase = (ledPhase + dt*ledSpeed) % 1;
+  if(ledState==='idle'||ledState==='spin'){
+    ledPhase=(ledPhase+dt*ledSpeed)%1;
     ledBulbs.forEach(({el,aMath})=>{
-      const a = aMath/360;
-      const k = Math.max(0, Math.cos((a-ledPhase)*Math.PI*2*4));
-      el.style.filter = `brightness(${0.6+0.4*k})`;
-      el.style.boxShadow = `0 0 ${8+12*k}px rgba(243,200,98,${.35+.45*k})`;
+      const a=aMath/360; const k=Math.max(0,Math.cos((a-ledPhase)*Math.PI*2*4));
+      el.style.filter=`brightness(${0.6+0.4*k})`;
+      el.style.boxShadow=`0 0 ${8+12*k}px rgba(243,200,98,${.35+.45*k})`;
     });
   }
 }
 
 /* ========= Three.js ========= */
-const stage = document.getElementById('stage');
-const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+const stage=document.getElementById('stage');
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.setSize(innerWidth, innerHeight);
+renderer.setSize(innerWidth,innerHeight);
 stage.appendChild(renderer.domElement);
-let camera;
-const scene = new THREE.Scene();
+let camera; const scene=new THREE.Scene();
 
 /* 盤 */
-const loader = new THREE.TextureLoader();
-const tex = loader.load('roulette_ui_6_sections.png');
-tex.colorSpace = THREE.SRGBColorSpace;
-const wheel = new THREE.Mesh(new THREE.PlaneGeometry(1,1), new THREE.MeshBasicMaterial({ map:tex, transparent:true }));
+const loader=new THREE.TextureLoader();
+const tex=loader.load('roulette_ui_6_sections.png'); tex.colorSpace=THREE.SRGBColorSpace;
+const wheel=new THREE.Mesh(new THREE.PlaneGeometry(1,1), new THREE.MeshBasicMaterial({map:tex,transparent:true}));
 scene.add(wheel);
-// 豪華リム
-const rimGeo = new THREE.RingGeometry(0.49, 0.54, 96);
-const rimMat = new THREE.MeshPhysicalMaterial({
-  color:0xd6b253, metalness:1, roughness:.25, clearcoat:1, clearcoatRoughness:.15
-});
-const rimMesh = new THREE.Mesh(rimGeo, rimMat);
-rimMesh.position.z = -0.001; // 盤のちょい下に
-scene.add(rimMesh);
 
-/* ── 針（わかりやすいクラシック矢印ver） ── */
-// 盤の中心(原点)を回転軸にするため：
-// pointerGroup は原点に置き、見た目の針は「アンカー」を少し上にずらして載せる。
-const pointerGroup = new THREE.Group();   // ← 回転用（原点）
-scene.add(pointerGroup);
+/* 針（クラシック矢印・視認性UP） */
+const pointerGroup=new THREE.Group(); scene.add(pointerGroup);
+const pointerAnchor=new THREE.Group(); pointerGroup.add(pointerAnchor);
 
-const pointerAnchor = new THREE.Group();  // ← 見た目を載せる土台（上へオフセット）
-pointerGroup.add(pointerAnchor);
-
-function makeGlowSprite(px=320, rgba='rgba(255,90,118,1)'){
-  const c=document.createElement('canvas'); c.width=c.height=px;
-  const g=c.getContext('2d');
-  const grd=g.createRadialGradient(px/2,px/2,0, px/2,px/2,px/2);
-  grd.addColorStop(0, rgba.replace('1)', '0.55)'));
-  grd.addColorStop(1, rgba.replace('1)', '0)'));
+function makeGlowSprite(px=420,rgba='rgba(255,80,120,1)'){
+  const c=document.createElement('canvas'); c.width=c.height=px; const g=c.getContext('2d');
+  const grd=g.createRadialGradient(px/2,px/2,0,px/2,px/2,px/2);
+  grd.addColorStop(0,rgba.replace('1)','0.55)')); grd.addColorStop(1,rgba.replace('1)','0)'));
   g.fillStyle=grd; g.fillRect(0,0,px,px);
   const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace;
   return new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));
 }
-
-// ここから buildPointer を丸ごと置換
 function buildPointer(){
-  const g = new THREE.Group();
+  const g=new THREE.Group();
+  const base=new THREE.CylinderGeometry(0.16,0.2,0.06,48);
+  const baseMesh=new THREE.Mesh(base,new THREE.MeshPhysicalMaterial({color:0xb39a5a,metalness:1,roughness:.2,clearcoat:1,clearcoatRoughness:.12}));
+  baseMesh.position.set(0,-0.03,0); g.add(baseMesh);
 
-  // 台座（厚め・金属感UP）
-  const base = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.22,0.26,0.08,64),
-    new THREE.MeshPhysicalMaterial({
-      color:0x9c7b2f, metalness:1, roughness:.22, clearcoat:1, clearcoatRoughness:.15
-    })
-  );
-  base.position.set(0,-0.04,0);
-  g.add(base);
+  // 白×金で視認性アップ
+  const shaft=new THREE.Mesh(new THREE.BoxGeometry(0.06,0.30,0.05),
+    new THREE.MeshPhysicalMaterial({color:0xffffff,metalness:.6,roughness:.2,clearcoat:1}));
+  shaft.position.y=0.10; g.add(shaft);
 
-  // シャフト（白磁っぽい質感）
-  const shaft = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.055,0.28, 1, 24),
-    new THREE.MeshPhysicalMaterial({
-      color:0xf7f7fb, metalness:.15, roughness:.2, transmission:.0, clearcoat:1
-    })
-  );
-  shaft.position.y = 0.12;
-  g.add(shaft);
+  const head=new THREE.Mesh(new THREE.ConeGeometry(0.13,0.24,40),
+    new THREE.MeshPhysicalMaterial({color:0xff5757,emissive:0x551111,emissiveIntensity:.6,metalness:.2,roughness:.25,clearcoat:1}));
+  head.rotation.z=Math.PI; head.position.y=0.42; g.add(head);
 
-  // 金リング（シャフトと矢じりの境目）
-  const collar = new THREE.Mesh(
-    new THREE.TorusGeometry(0.09, 0.018, 24, 64),
-    new THREE.MeshPhysicalMaterial({ color:0xd8b04f, metalness:1, roughness:.2, clearcoat:1 })
-  );
-  collar.rotation.x = Math.PI/2;
-  collar.position.y = 0.26;
-  g.add(collar);
+  const tip=new THREE.Mesh(new THREE.SphereGeometry(0.034,24,24),
+    new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xfff2c0,emissiveIntensity:1.2,metalness:.1,roughness:.2}));
+  tip.position.y=0.53; g.add(tip);
 
-  // 矢じり（白コーン＋赤エミッシブの先端カバーで“矢印感”）
-  const headBody = new THREE.Mesh(
-    new THREE.ConeGeometry(0.16,0.26, 48),
-    new THREE.MeshPhysicalMaterial({ color:0xffffff, metalness:.2, roughness:.3, clearcoat:1 })
-  );
-  headBody.rotation.z = Math.PI;         // 先端を上向き
-  headBody.position.y = 0.26 + 0.13;
-  g.add(headBody);
-
-  // 先端キャップ（赤く光る）
-  const tipCap = new THREE.Mesh(
-    new THREE.ConeGeometry(0.125,0.1, 40),
-    new THREE.MeshPhysicalMaterial({
-      color:0xff3b3b, emissive:0x991122, emissiveIntensity:0.9,
-      metalness:.2, roughness:.25, clearcoat:1
-    })
-  );
-  tipCap.rotation.z = Math.PI;
-  tipCap.position.y = headBody.position.y + 0.13;
-  g.add(tipCap);
-
-  // ダイヤ風の先珠
-  const tip = new THREE.Mesh(
-    new THREE.OctahedronGeometry(0.045, 1),
-    new THREE.MeshStandardMaterial({ color:0xfff3c0, emissive:0xffe39a, emissiveIntensity:1.3, metalness:.3, roughness:.2 })
-  );
-  tip.position.y = tipCap.position.y + 0.08;
-  g.add(tip);
-
-  // グロー（白×金の2層）
-  const glowWhite = makeGlowSprite(520, 'rgba(255,255,255,1)');
-  glowWhite.position.set(0, tip.position.y, 0.02);
-  glowWhite.scale.set(0.50,0.50,1);
-
-  const glowGold = makeGlowSprite(560, 'rgba(255,210,120,1)');
-  glowGold.position.set(0, tip.position.y - 0.02, 0.01);
-  glowGold.scale.set(0.58,0.58,1);
-
-  g.add(glowWhite, glowGold);
+  const glow=makeGlowSprite(520,'rgba(255,160,120,1)'); glow.position.set(0,0.53,0.02); glow.scale.set(0.5,0.5,1);
+  g.add(glow);
   return g;
 }
-// ここまで置換
-const pointerVisual = buildPointer();
-pointerAnchor.add(pointerVisual);
-/* リサイズ＆配置（サイズ依存はここでだけ処理） */
+pointerAnchor.add(buildPointer());
+
 function fit(){
-  const w = innerWidth, h = innerHeight;
+  const w=innerWidth,h=innerHeight;
   renderer.setSize(w,h);
-  camera = new THREE.OrthographicCamera(-w/2, w/2, h/2, -h/2, -10, 10);
+  camera=new THREE.OrthographicCamera(-w/2,w/2,h/2,-h/2,-10,10);
   camera.position.set(0,0,5); camera.lookAt(0,0,0);
 
-  const size = Math.min(w,h) * 0.86;   // 盤サイズ
-  wheel.scale.set(size, size, 1);
-  // fit() 内の wheel.scale.set(size, size, 1); の直後に追記
-rimMesh.scale.set(size, size, 1);
+  const size=Math.min(w,h)*0.86;
+  wheel.scale.set(size,size,1);
 
-  // 針のスケールと見た目のオフセット
-  const pointerScale = size * 0.22;
-  pointerGroup.scale.set(pointerScale, pointerScale, pointerScale);
-  pointerGroup.position.set(0,0,0);         // 回転中心は原点
-  const offset = size * 0.40 / pointerScale; // 見た目だけ上へ
-  pointerAnchor.position.set(0, offset, 0);
+  const pointerScale=size*0.22;
+  pointerGroup.scale.set(pointerScale,pointerScale,pointerScale);
+  pointerGroup.position.set(0,0,0);
+  const offset=size*0.40/pointerScale;
+  pointerAnchor.position.set(0,offset,0);
 
-  // 初期角
-  pointerGroup.rotation.z = pointerAngle = 0;
+  pointerGroup.rotation.z=pointerAngle=0;
 }
-addEventListener('resize', fit); fit();
+addEventListener('resize',fit); fit();
 
-// 着地後の小バウンス（視覚のみ：最終当たりは変えない）
-(function settleBounce(){
-  const base = pointerGroup.rotation.z;     // 着地角
-  const start = performance.now();
-  const D = 380;                             // 全体の長さ(ms)
-  function easeOutExpo(t){ return 1 - Math.pow(2, -10*t); }
-  function frame(now){
-    const t = Math.min(1, (now - start)/D);
-    const amp = deg(1.1) * (1 - t);         // 振幅は徐々に減衰（最大約1.1°）
-    pointerGroup.rotation.z = base + Math.sin(t * Math.PI * 2) * amp * easeOutExpo(t);
-    if (t < 1) requestAnimationFrame(frame);
-    else pointerGroup.rotation.z = base;     // 最終的にぴったり戻す
-  }
-  requestAnimationFrame(frame);
-})();
-
-/* ========= オーディオ ========= */
+/* ========= オーディオ（カーニバルBGM） ========= */
 let audioCtx, master, loopTimer, muted=false, bgmNode;
 function ensureAudio(){
   if(audioCtx) return;
   audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-  master=audioCtx.createGain(); master.gain.value=.45; master.connect(audioCtx.destination);
-  const bpm=112, beat=60/bpm;
+  master=audioCtx.createGain(); master.gain.value=.48; master.connect(audioCtx.destination);
+
   function startBGM(){
     if(muted) return; stopBGM();
+    const bpm=120, beat=60/bpm;
     bgmNode=setInterval(()=>{
       const t0=audioCtx.currentTime;
       for(let step=0; step<8; step++){
         const t=t0+step*beat/2;
-        const f=[392,494,587,659][step%4];
-        const o=audioCtx.createOscillator(); o.type='sine'; o.frequency.value=f;
+
+        // 🎺 トランペット風（sawtooth + スタッカート）
+        const melody=[523,659,784,880][step%4]; // C E G A
+        const o=audioCtx.createOscillator(); o.type='sawtooth'; o.frequency.value=melody;
         const g=audioCtx.createGain(); g.gain.value=0.0001; o.connect(g).connect(master);
-        o.start(t); g.gain.setValueAtTime(0.0001,t);
-        g.gain.exponentialRampToValueAtTime(0.10,t+0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001,t+beat/2-0.02);
+        o.start(t);
+        g.gain.setValueAtTime(0.0001,t);
+        g.gain.exponentialRampToValueAtTime(0.18,t+0.05);
+        g.gain.exponentialRampToValueAtTime(0.0001,t+beat/2-0.05);
         o.stop(t+beat/2);
-      }}
-    , beat*1000*4);
+
+        // 🥁 スネア風ノイズ（裏拍で）
+        if(step%2===0){
+          const n=audioCtx.createBufferSource();
+          const buf=audioCtx.createBuffer(1, audioCtx.sampleRate*0.12, audioCtx.sampleRate);
+          const ch=buf.getChannelData(0);
+          for(let i=0;i<ch.length;i++) ch[i]=Math.random()*2-1;
+          n.buffer=buf;
+          const g2=audioCtx.createGain(); g2.gain.value=0.14;
+          const hp=audioCtx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=1800;
+          n.connect(hp).connect(g2).connect(master);
+          n.start(t+beat/4);
+        }
+
+        // 🎶 ベース（チューバっぽく）
+        const b=audioCtx.createOscillator(); b.type='square'; b.frequency.value=[130.81,164.81][step%2]; // C3 / E3
+        const gb=audioCtx.createGain(); gb.gain.value=0.0001; b.connect(gb).connect(master);
+        b.start(t);
+        gb.gain.setValueAtTime(0.0001,t);
+        gb.gain.exponentialRampToValueAtTime(0.12,t+0.04);
+        gb.gain.exponentialRampToValueAtTime(0.0001,t+beat/2);
+        b.stop(t+beat/2);
+      }
+    }, beat*1000*4);
   }
   function stopBGM(){ if(bgmNode){ clearInterval(bgmNode); bgmNode=null; } }
   ensureAudio.startBGM=startBGM; ensureAudio.stopBGM=stopBGM;
@@ -439,36 +354,33 @@ function playHitSFX(){
   o.stop(t+0.30);
 }
 
-/* ========= 判定（角度→アイテム） ========= */
-// 針→時計角の補正（+なら時計回り、−なら反時計回り）
-const JUDGE_OFFSET_CLOCK = -90; // ← ずれが逆なら -90 に
-
+/* ========= 判定 ========= */
+const JUDGE_OFFSET_CLOCK=-90; // ずれ補正（必要に応じ±90を切替）
 function clockDegFromRad(rad){
-  const mathDeg = (radToDeg(rad) % 360 + 360) % 360;
-  // 0=12時の時計角に変換してから補正を加える
-  return ((90 - mathDeg + 360) % 360 + JUDGE_OFFSET_CLOCK) % 360;
+  const mathDeg=(radToDeg(rad)%360+360)%360;
+  return ((90-mathDeg+360)%360 + JUDGE_OFFSET_CLOCK + 360)%360;
 }
 function itemIdxByClockDeg(a){
   const d=((a%360)+360)%360;
-  if(d>=30 && d<90)   return 0; // 牛
-  if(d>=90 && d<150)  return 1; // えび
-  if(d>=150 && d<210) return 2; // ロースト
-  if(d>=210 && d<270) return 3; // フライド
-  if(d>=270 && d<330) return 4; // バゲット
-  return 5;                      // 野菜
+  if(d>=30 && d<90)   return 0;
+  if(d>=90 && d<150)  return 1;
+  if(d>=150 && d<210) return 2;
+  if(d>=210 && d<270) return 3;
+  if(d>=270 && d<330) return 4;
+  return 5;
 }
 function idxByAngleRad(rad){ return itemIdxByClockDeg(clockDegFromRad(rad)); }
 function targetAngleForIdx(idx){ return deg(toMathDeg(ITEMS[idx].centerClock)); }
 function faceFor(name){ return FACE_MAP[name] || "face.png"; }
 
-/* ========= スピン（ゆっくり止まる） ========= */
+/* ========= スピン制御 ========= */
 let omega=0, spinMode='idle';
 const OMEGA_MAX=10, ACCEL=16;
 let stopStartAngle=0, stopTargetAngle=0, stopElapsed=0, stopDuration=3.0;
-const shortestDelta=(from,to)=>{ let d=norm(to)-norm(from); if(d>Math.PI) d-=TAU; if(d<-Math.PI) d+=TAU; return d; };
+const shortestDelta=(from,to)=>{let d=norm(to)-norm(from); if(d>Math.PI) d-=TAU; if(d<-Math.PI) d+=TAU; return d;};
 
 function startSpin(){
-  if(spinning || spinsLeft<=0) return;
+  if(spinning||spinsLeft<=0) return;
   spinning=true;
   document.getElementById('spin').disabled=true;
   document.getElementById('stop').disabled=false;
@@ -479,69 +391,67 @@ function startSpin(){
   spinMode='spin'; omega=0.0001; setLEDSpin(0.2);
 }
 function pressStop(){
-  if (spinMode !== 'spin') return;
-  spinMode = 'stoppingTween';
+  if(spinMode!=='spin') return;
+  spinMode='stoppingTween';
   stopSpinLoop();
 
-  // 現在角度（数学角, rad）と「今指している区画」
-  const nowA = norm(pointerGroup.rotation.z);
-  const idx  = idxByAngleRad(nowA);
+  const nowA=norm(pointerGroup.rotation.z);
+  const idx=idxByAngleRad(nowA);
+  const centerTgt=targetAngleForIdx(idx);
 
-  // その区画の中心角（数学角, rad）
-  const centerTgt = targetAngleForIdx(idx);
+  // 区画内のランダム位置に着地
+  const jitter=(Math.random()*2-1)*deg(30); // ±30°
+  const tgt=centerTgt + jitter;
 
-  // ── ランダムにずらして「区画の中のどこか」で止める ──
-  // 区画幅は60°なので、±30°の範囲でジッターを与える
-  const maxOffset = THREE.MathUtils.degToRad(30);
-  const jitter    = (Math.random() * 2 - 1) * maxOffset; // -30°〜+30°
-  const tgt       = centerTgt + jitter;
-
-  // 4〜6周しながらターゲットへ（自然に見える周回数）
-  const laps = 4 + Math.floor(Math.random() * 3);
-
-  stopStartAngle  = nowA;
-  stopTargetAngle = nowA + laps * TAU + shortestDelta(nowA, tgt);
-  stopElapsed     = 0;
-
-  // 停止の長さも少しランダムに（2.7〜3.3秒）
-  stopDuration = 2.7 + Math.random() * 0.6;
+  const laps=4+Math.floor(Math.random()*3); // 4〜6周
+  stopStartAngle=nowA;
+  stopTargetAngle=nowA + laps*TAU + shortestDelta(nowA, tgt);
+  stopElapsed=0;
+  stopDuration=2.7 + Math.random()*0.6;
 }
 function finishStop(){
-  pointerGroup.rotation.z = norm(stopTargetAngle);
-  pointerAngle = pointerGroup.rotation.z;
+  pointerGroup.rotation.z=norm(stopTargetAngle);
+  pointerAngle=pointerGroup.rotation.z;
   spinMode='idle'; omega=0; setLEDIdle();
 
-  const idx = idxByAngleRad(pointerAngle);
-  const it  = ITEMS[idx];
-  results.push({ idx, name: it.name, emoji: it.emoji });
+  const idx=idxByAngleRad(pointerAngle);
+  const it=ITEMS[idx];
+  results.push({idx,name:it.name,emoji:it.emoji});
 
-  faceImg.src = faceFor(it.name);
+  faceImg.src=faceFor(it.name);
   faceOverlay.style.display='grid';
   playHitSFX(); showToast(`${it.emoji} ${it.name}！`);
   setLEDWin(ITEMS[idx].centerClock);
-  setTimeout(()=>{ faceOverlay.style.display='none'; }, 1700);
+  setTimeout(()=>{faceOverlay.style.display='none';},1700);
 
-  spinsLeft -= 1; setLeft(spinsLeft);
+  spinsLeft-=1; setLeft(spinsLeft);
   spinning=false;
   document.getElementById('spin').disabled=(spinsLeft<=0);
   document.getElementById('stop').disabled=true;
-  if(spinsLeft<=0) showSummary();
+
+  if(spinsLeft<=0){
+    // Cong 画面を2秒表示 → サマリーへ
+    congScreen.style.display='flex';
+    setTimeout(()=>{
+      congScreen.style.display='none';
+      showSummary();
+    },2000);
+  }
 }
 function stepSpin(dt){
   if(spinMode==='idle') return;
-
   if(spinMode==='spin'){
-    omega=Math.min(OMEGA_MAX, omega + ACCEL*dt);
-    pointerGroup.rotation.z = norm(pointerGroup.rotation.z + omega*dt);
+    omega=Math.min(OMEGA_MAX, omega+ACCEL*dt);
+    pointerGroup.rotation.z=norm(pointerGroup.rotation.z + omega*dt);
     setLEDSpin(omega/OMEGA_MAX);
     return;
   }
   if(spinMode==='stoppingTween'){
-    stopElapsed += dt;
+    stopElapsed+=dt;
     const t=Math.min(1, stopElapsed/stopDuration);
-    const ease=1 - Math.pow(1-t, 3); // easeOutCubic
+    const ease=1-Math.pow(1-t,3); // easeOutCubic
     const total=stopTargetAngle - stopStartAngle;
-    pointerGroup.rotation.z = norm(stopStartAngle + total*ease);
+    pointerGroup.rotation.z=norm(stopStartAngle + total*ease);
     setLEDSpin(1 - t*0.95);
     if(t>=1) finishStop();
   }
@@ -550,7 +460,7 @@ function stepSpin(dt){
 /* ========= サマリー ========= */
 function showSummary(){
   const map=new Map();
-  results.forEach(r=> map.set(r.name,(map.get(r.name)||0)+1));
+  results.forEach(r=>map.set(r.name,(map.get(r.name)||0)+1));
   const rows=[...map.entries()].map(([n,c])=>`<tr><td>${n}</td><td style="text-align:right">${c}</td></tr>`).join('');
   document.getElementById('list').innerHTML =
     `<table><thead><tr><th>メニュー</th><th style="text-align:right">数量</th></tr></thead><tbody>${rows||'<tr><td colspan="2">なし</td></tr>'}</tbody></table>`;
@@ -560,14 +470,9 @@ function showSummary(){
 /* ========= レンダリング ========= */
 let last=performance.now();
 function render(){
-  const now=performance.now();
-  const dt=Math.min(0.05,(now-last)/1000);
-  last=now;
-
-  stepSpin(dt);
-  stepLED(dt);
-
-  wheel.rotation.z=0; // 盤は固定
+  const now=performance.now(); const dt=Math.min(0.05,(now-last)/1000); last=now;
+  stepSpin(dt); stepLED(dt);
+  wheel.rotation.z=0;
   renderer.render(scene,camera);
   requestAnimationFrame(render);
 }
@@ -582,7 +487,7 @@ document.getElementById('reset').addEventListener('click', ()=>{
   document.getElementById('summary').style.display='none';
   document.getElementById('spin').disabled=false;
   document.getElementById('stop').disabled=true;
-  pointerGroup.rotation.z = pointerAngle = 0;
+  pointerGroup.rotation.z=pointerAngle=0;
   spinMode='idle'; setLEDIdle();
   document.getElementById('start').style.display='grid';
 });
@@ -590,7 +495,16 @@ document.getElementById('mute').addEventListener('click', ()=>{
   muted=!muted; showToast(muted?'ミュート':'サウンドON');
 });
 
-
+/* 人数ボタンでスタート */
+document.querySelectorAll('.numBtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const p=Number(btn.dataset.p);
+    spinsLeft=p*2; setLeft(spinsLeft); results=[];
+    document.getElementById('start').style.display='none';
+    ensureAudio(); ensureAudio.startBGM?.();
+    showToast(`人数 ${p}人 / 合計 ${spinsLeft}回`);
+  });
+});
 
 /* サマリー後の操作 */
 document.getElementById('again').addEventListener('click', ()=>{
@@ -599,18 +513,6 @@ document.getElementById('again').addEventListener('click', ()=>{
 });
 document.getElementById('closeSummary').addEventListener('click', ()=>{
   document.getElementById('summary').style.display='none';
-});
-// 人数ボタンでスタート
-document.querySelectorAll('.numBtn').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const p = Number(btn.dataset.p);
-    spinsLeft = p * 2;
-    setLeft(spinsLeft);
-    results = [];
-    document.getElementById('start').style.display='none';
-    ensureAudio(); ensureAudio.startBGM?.();
-    showToast(`人数 ${p}人 / 合計 ${spinsLeft}回`);
-  });
 });
 </script>
 </body>
